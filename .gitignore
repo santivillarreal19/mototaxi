@@ -1,0 +1,19 @@
+# Bloque mínimo equipo TI AYNN-OROEXPRESS
+.claude/settings.local.json
+CLAUDE.local.md
+.env
+
+# Node / Vite
+node_modules/
+dist/
+.env.local
+.env.*.local
+*.log
+
+# Supabase CLI
+supabase/.temp/
+supabase/.branches/
+
+# Editor / SO
+.DS_Store
+Thumbs.db
