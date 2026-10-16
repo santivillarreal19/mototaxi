@@ -235,13 +235,16 @@ Suite: **84 tests** unitarios (baseline 65 + 19 nuevos). RLS: 7 (5 + 2 de catego
 - Saldo, préstamos y abonos **no** entran en la ganancia por moto ni en los totales por período.
 
 #### ⏳ Diferido — NO perder
-- ⏳ **Aplicar y publicar, en este orden:** `npx supabase db push` → `npm run test:rls` → integrar a `main`. Al revés no funciona: el código nuevo consulta `caja`, y si se publica antes de la migración el inicio falla.
+- ⏳ **Aplicar y publicar, en este orden:** `npx supabase db push` (migraciones 20261016130000 y 20261016140000) → `npm run test:rls` → integrar a `main`. Al revés no funciona: el código nuevo consulta `caja`, y si se publica antes de la migración el inicio falla.
 - ⏳ **Cargar los $628.000** en la cuenta del cliente: Caja → "+ Agregar saldo", con fecha de hoy.
 - ⏳ **WhatsApp al encargado por préstamos o abonos** — no se pidió. Retomar si el cliente quiere constancia para el encargado.
 - ⏳ **Intereses de préstamos** — no se pidió; hoy un préstamo es solo capital.
 - ⏳ **Validación de abonos en la base** — que un abono no supere lo pendiente se valida solo en la app. Retomar si se editan datos a mano con frecuencia.
 
+#### Problemas encontrados y solución
+- **`infinite recursion detected in policy for relation "caja"`** al registrar en Caja. Lo detectó `npm run test:rls` antes de publicar. Causa: el WITH CHECK de la política de `caja` consultaba la misma tabla `caja` (para validar el préstamo de un abono), y eso vuelve a evaluar la política. Solución: migración [20261016140000_caja_politica_sin_recursion.sql](supabase/migrations/20261016140000_caja_politica_sin_recursion.sql), que hace la verificación en la función `security definer` `es_prestamo_propio`. **Lección:** una política RLS nunca debe consultar su propia tabla directamente.
+
 #### Tests
-Suite: **93 tests** unitarios (84 + 9 de caja). RLS: 8 (7 + 1 de caja). Se corre después de aplicar la migración.
+Suite: **93 tests** unitarios (84 + 9 de caja). RLS: 9 (7 + 2 de caja: aislamiento, y abono propio sí / ajeno no). Se corren después de aplicar las migraciones.
 
 ---

@@ -2,8 +2,8 @@
  * Prueba de integración de RLS contra el proyecto Supabase real.
  *
  * Verifica que un usuario (B) no puede ver, modificar ni usar los datos de otro (A),
- * incluidas sus categorías de gasto y su caja (requiere las migraciones 20261016120000 y
- * 20261016130000 aplicadas).
+ * incluidas sus categorías de gasto y su caja (requiere las migraciones 20261016120000 a
+ * 20261016140000 aplicadas).
  * Se SALTA sola si faltan credenciales, por eso `npm test` y el CI no la necesitan.
  * Para correrla: crear `.env.test.local` (ignorado por git) con RLS_URL, RLS_ANON_KEY,
  * RLS_A_EMAIL, RLS_A_PASS, RLS_B_EMAIL y RLS_B_PASS (dos usuarios de prueba, NO el del
@@ -131,6 +131,24 @@ describe.skipIf(!configurado)('RLS: aislamiento entre usuarios', () => {
       expect(errPrestamo).not.toBeNull();
     } finally {
       await a.from('caja').delete().eq('id', saldoA.id);
+    }
+  });
+
+  it('A abona a su propio préstamo, pero B no puede abonar a un préstamo de A', async () => {
+    const { data: prestamoA, error } = await a
+      .from('caja')
+      .insert({ tipo: 'prestamo', fecha: '2026-10-16', monto: 1000, moto_id: motoA, encargado_nombre: 'Prueba' })
+      .select('id')
+      .single();
+    if (error) throw error;
+    try {
+      const { error: errA } = await a.from('caja').insert({ tipo: 'abono', fecha: '2026-10-16', monto: 500, prestamo_id: prestamoA.id });
+      expect(errA).toBeNull();
+      const { error: errB } = await b.from('caja').insert({ tipo: 'abono', fecha: '2026-10-16', monto: 500, prestamo_id: prestamoA.id });
+      expect(errB).not.toBeNull();
+    } finally {
+      await a.from('caja').delete().eq('prestamo_id', prestamoA.id);
+      await a.from('caja').delete().eq('id', prestamoA.id);
     }
   });
 
