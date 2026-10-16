@@ -30,14 +30,14 @@ function ItemMoto({ moto }: { moto: Moto }) {
 }
 
 export function Motos() {
-  const { datos: motos, error, cargando } = useDatos(() => listarMotos({ incluirArchivadas: true }), []);
+  const { datos: motos, error, cargando, recargar } = useDatos(() => listarMotos({ incluirArchivadas: true }), []);
   const activas = motos?.filter((m) => !m.archivada) ?? [];
   const archivadas = motos?.filter((m) => m.archivada) ?? [];
 
   return (
     <main className="pantalla">
       <Encabezado titulo="Motos" volverA="/" />
-      {error && <Aviso>{error}</Aviso>}
+      {error && <Aviso onReintentar={recargar}>{error}</Aviso>}
       {cargando && !motos ? (
         <Cargando />
       ) : (

@@ -3,7 +3,9 @@
  * - Pago nuevo: el monto se precarga con la tarifa diaria. Al guardar va a
  *   /pago-registrado/:id, donde está el botón de WhatsApp.
  * - Editar NO reenvía el mensaje. Eliminar pide confirmación.
- * - En un error de guardado (p. ej. sin señal) los campos se conservan para reintentar.
+ * - En un error de guardado (p. ej. sin señal) los campos se conservan para reintentar, y el
+ *   id generado una sola vez evita duplicar el pago si el primer intento sí llegó.
+ * - El pago guardado viaja en el estado de la navegación (ver lib/confirmacion.ts).
  */
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +13,7 @@ import { aErrorApp } from '../data/errores';
 import { actualizarMovimiento, crearMovimiento, eliminarMovimiento } from '../data/movimientos';
 import { supabase } from '../data/supabase';
 import { hoyISO } from '../lib/fechas';
+import { nuevoId } from '../lib/ids';
 import { CATEGORIAS_GASTO, type CategoriaGasto, type Moto, type Movimiento, type TipoMovimiento } from '../lib/tipos';
 import { validarFecha, validarMonto } from '../lib/validaciones';
 import { Campo } from './Campo';
@@ -27,6 +30,8 @@ export function FormMovimiento({ moto, tipo, existente }: { moto: Moto; tipo: Ti
   const [errores, setErrores] = useState<Record<string, string | null>>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  // Un solo id por formulario: los reintentos tras un corte de red no duplican el pago.
+  const [idNuevo] = useState(() => nuevoId());
   const volver = `/motos/${moto.id}`;
 
   async function guardar(e: FormEvent) {
@@ -54,8 +59,9 @@ export function FormMovimiento({ moto, tipo, existente }: { moto: Moto; tipo: Ti
         await actualizarMovimiento(existente.id, datos);
         navigate(volver, { replace: true });
       } else {
-        const creado = await crearMovimiento(datos);
-        navigate(tipo === 'pago' ? `/pago-registrado/${creado.id}` : volver, { replace: true });
+        const creado = await crearMovimiento(datos, idNuevo);
+        if (tipo === 'pago') navigate(`/pago-registrado/${creado.id}`, { replace: true, state: { movimiento: creado, moto } });
+        else navigate(volver, { replace: true });
       }
     } catch (err) {
       const app = aErrorApp(err);

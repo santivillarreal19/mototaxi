@@ -4,6 +4,7 @@
  * (ver paginar.ts). El orden es fecha desc → created_at desc → id, estable para paginar.
  */
 import type { Movimiento, MovimientoNuevo } from '../lib/tipos';
+import { insertarIdempotente } from './idempotencia';
 import { paginar } from './paginar';
 import { supabase } from './supabase';
 
@@ -36,10 +37,19 @@ export async function obtenerMovimiento(id: string): Promise<Movimiento> {
   return data as Movimiento;
 }
 
-export async function crearMovimiento(m: MovimientoNuevo): Promise<Movimiento> {
-  const { data, error } = await supabase.from('movimientos').insert(m).select(COLUMNAS).single();
-  if (error) throw error;
-  return data as Movimiento;
+/**
+ * `id` lo genera el formulario una sola vez (lib/ids.ts): si un reintento choca con un
+ * guardado anterior que sí llegó, se devuelve ese en vez de duplicar el pago.
+ */
+export async function crearMovimiento(m: MovimientoNuevo, id: string): Promise<Movimiento> {
+  return insertarIdempotente(
+    async () => {
+      const { data, error } = await supabase.from('movimientos').insert({ ...m, id }).select(COLUMNAS).single();
+      if (error) throw error;
+      return data as Movimiento;
+    },
+    () => obtenerMovimiento(id),
+  );
 }
 
 export async function actualizarMovimiento(id: string, cambios: Partial<MovimientoNuevo>): Promise<Movimiento> {

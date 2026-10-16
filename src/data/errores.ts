@@ -10,7 +10,9 @@
 export type TipoError = 'sin_conexion' | 'duplicado' | 'sesion' | 'credenciales' | 'no_encontrado' | 'desconocido';
 
 const MENSAJES: Record<TipoError, string> = {
-  sin_conexion: 'No hay conexión a internet. No se guardó: revisa la señal e intenta de nuevo.',
+  // Al guardar sin red no se puede saber si el servidor alcanzó a recibirlo; reintentar es
+  // seguro porque los movimientos se crean con id del cliente (ver data/idempotencia.ts).
+  sin_conexion: 'No hay conexión a internet. Revisa la señal y toca Guardar de nuevo.',
   duplicado: 'Ya existe un registro igual.',
   sesion: 'Tu sesión venció. Vuelve a iniciar sesión.',
   credenciales: 'Correo o contraseña incorrectos.',
@@ -32,7 +34,14 @@ function navegadorEnLinea(): boolean {
   return typeof navigator === 'undefined' ? true : navigator.onLine;
 }
 
-export function aErrorApp(e: unknown, enLinea: boolean = navegadorEnLinea()): ErrorApp {
+const SIN_CONEXION_AL_LEER = 'No hay conexión a internet. No se pudieron cargar los datos.';
+
+/** `operacion` cambia el texto de "sin conexión": al leer no tiene sentido decir "Guardar". */
+export function aErrorApp(
+  e: unknown,
+  enLinea: boolean = navegadorEnLinea(),
+  operacion: 'leer' | 'guardar' = 'guardar',
+): ErrorApp {
   if (e instanceof ErrorApp) return e;
   const obj = (typeof e === 'object' && e !== null ? e : {}) as { code?: unknown; message?: unknown };
   const codigo = String(obj.code ?? '');
@@ -46,5 +55,6 @@ export function aErrorApp(e: unknown, enLinea: boolean = navegadorEnLinea()): Er
   else if (codigo === 'PGRST116') tipo = 'no_encontrado';
 
   if (tipo === 'desconocido') console.error(e);
+  if (tipo === 'sin_conexion' && operacion === 'leer') return new ErrorApp(tipo, SIN_CONEXION_AL_LEER);
   return new ErrorApp(tipo);
 }

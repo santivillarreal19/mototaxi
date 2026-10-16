@@ -5,7 +5,12 @@ describe('aErrorApp', () => {
   it('reconoce la falta de red de Safari ("Load failed")', () => {
     const e = aErrorApp(new TypeError('Load failed'), true);
     expect(e.tipo).toBe('sin_conexion');
-    expect(e.message).toBe('No hay conexión a internet. No se guardó: revisa la señal e intenta de nuevo.');
+    expect(e.message).toBe('No hay conexión a internet. Revisa la señal y toca Guardar de nuevo.');
+  });
+  it('al leer datos sin red no dice que algo "no se guardó"', () => {
+    const e = aErrorApp(new TypeError('Load failed'), true, 'leer');
+    expect(e.tipo).toBe('sin_conexion');
+    expect(e.message).toBe('No hay conexión a internet. No se pudieron cargar los datos.');
   });
   it('reconoce la falta de red de Chrome y el error envuelto por supabase-js', () => {
     expect(aErrorApp({ message: 'TypeError: Failed to fetch', code: '' }, true).tipo).toBe('sin_conexion');

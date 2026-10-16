@@ -19,7 +19,7 @@ import { calcularTotales, TOTALES_VACIOS, totalesPorMoto } from '../lib/totales'
 export function Inicio() {
   const [periodo, cambiarPeriodo] = usePeriodo();
   const { desde, hasta } = rangoPeriodo(periodo, hoyISO());
-  const { datos, error, cargando } = useDatos(async () => {
+  const { datos, error, cargando, recargar } = useDatos(async () => {
     const [motos, movs] = await Promise.all([listarMotos({ incluirArchivadas: false }), listarMovimientos({ desde, hasta })]);
     return { motos, movs };
   }, [desde, hasta]);
@@ -30,7 +30,7 @@ export function Inicio() {
     <main className="pantalla">
       <Encabezado titulo="Mototaxi" accion={<Link to="/motos">Motos</Link>} />
       <SelectorPeriodo valor={periodo} onCambio={cambiarPeriodo} />
-      {error && <Aviso>{error}</Aviso>}
+      {error && <Aviso onReintentar={recargar}>{error}</Aviso>}
       {cargando && !datos && <Cargando />}
       {datos && (
         <>

@@ -5,7 +5,7 @@
  */
 import { Link, useParams } from 'react-router-dom';
 import { Encabezado } from '../componentes/Encabezado';
-import { Aviso, Cargando } from '../componentes/Estado';
+import { Aviso, Cargando, ErrorCarga } from '../componentes/Estado';
 import { ResumenTotales } from '../componentes/ResumenTotales';
 import { SelectorPeriodo } from '../componentes/SelectorPeriodo';
 import { obtenerMoto } from '../data/motos';
@@ -21,13 +21,13 @@ export function DetalleMoto() {
   const { id = '' } = useParams();
   const [periodo, cambiarPeriodo] = usePeriodo();
   const { desde, hasta } = rangoPeriodo(periodo, hoyISO());
-  const { datos, error, cargando } = useDatos(async () => {
+  const { datos, error, cargando, recargar } = useDatos(async () => {
     const [moto, movs] = await Promise.all([obtenerMoto(id), listarMovimientos({ motoId: id, desde, hasta })]);
     return { moto, movs };
   }, [id, desde, hasta]);
 
   if (cargando && !datos) return <Cargando />;
-  if (!datos) return <main className="pantalla"><Encabezado titulo="Moto" volverA="/" /><Aviso>{error ?? 'No se encontró la moto.'}</Aviso></main>;
+  if (!datos) return <ErrorCarga titulo="Moto" volverA="/" mensaje={error ?? 'No se encontró la moto.'} onReintentar={recargar} />;
   const { moto, movs } = datos;
 
   return (
@@ -38,7 +38,7 @@ export function DetalleMoto() {
         {moto.encargado_nombre} · {formatearPesos(moto.tarifa_diaria)}/día
       </p>
       {moto.archivada && <Aviso>Esta moto está archivada. Desarchívala desde "Editar" para registrar movimientos.</Aviso>}
-      {error && <Aviso>{error}</Aviso>}
+      {error && <Aviso onReintentar={recargar}>{error}</Aviso>}
       <SelectorPeriodo valor={periodo} onCambio={cambiarPeriodo} />
       <ResumenTotales titulo="Neto de la moto" totales={calcularTotales(movs)} />
       {movs.length === 0 ? (

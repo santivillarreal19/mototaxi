@@ -3,28 +3,34 @@
  * El enlace es un <a> que toca el usuario: iOS bloquea abrir otra app por código.
  * Si WhatsApp no abre, "Copiar mensaje" deja el texto en el portapapeles; si el
  * portapapeles falla, se muestra el texto seleccionable.
+ * Usa el pago que viene en el estado de la navegación (no depende de la red justo después
+ * de guardar); solo consulta a Supabase si no hay estado, p. ej. al recargar.
  */
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { Encabezado } from '../componentes/Encabezado';
-import { Aviso, Cargando } from '../componentes/Estado';
+import { Cargando, ErrorCarga } from '../componentes/Estado';
 import { obtenerMoto } from '../data/motos';
 import { obtenerMovimiento } from '../data/movimientos';
 import { useDatos } from '../hooks/useDatos';
+import { pagoDesdeEstado } from '../lib/confirmacion';
 import { formatearPesos } from '../lib/dinero';
 import { formatearFecha } from '../lib/fechas';
 import { enlaceWhatsApp, mensajePago } from '../lib/whatsapp';
 
 export function PagoRegistrado() {
   const { id = '' } = useParams();
+  const location = useLocation();
   const [copiado, setCopiado] = useState<'no' | 'si' | 'fallo'>('no');
-  const { datos, error, cargando } = useDatos(async () => {
+  const { datos, error, cargando, recargar } = useDatos(async () => {
+    const recienGuardado = pagoDesdeEstado(location.state, id);
+    if (recienGuardado) return recienGuardado;
     const movimiento = await obtenerMovimiento(id);
     return { movimiento, moto: await obtenerMoto(movimiento.moto_id) };
   }, [id]);
 
   if (cargando && !datos) return <Cargando />;
-  if (!datos) return <main className="pantalla"><Encabezado titulo="Pago" volverA="/" /><Aviso>{error ?? 'No se encontró el pago.'}</Aviso></main>;
+  if (!datos) return <ErrorCarga titulo="Pago" volverA="/" mensaje={error ?? 'No se encontró el pago.'} onReintentar={recargar} />;
   const { movimiento, moto } = datos;
   const texto = mensajePago({ nombre: moto.encargado_nombre, placa: moto.placa, fecha: movimiento.fecha, monto: movimiento.monto });
 

@@ -144,6 +144,7 @@ a.tarjeta { display: block; color: inherit; text-decoration: none; }
   background: color-mix(in srgb, var(--gasto) 12%, var(--superficie)); border-left: 4px solid var(--gasto);
   padding: 12px; border-radius: 8px; margin-bottom: 16px;
 }
+.aviso__reintentar { margin-top: 10px; min-height: 44px; }
 .vacio { text-align: center; color: var(--texto-suave); padding: 32px 0; }
 .mensaje { white-space: pre-wrap; font-style: normal; margin: 8px 0 16px; }
 

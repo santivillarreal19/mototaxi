@@ -48,3 +48,8 @@ create policy movimientos_del_dueno on public.movimientos
     user_id = (select auth.uid())
     and exists (select 1 from public.motos m where m.id = moto_id and m.user_id = (select auth.uid()))
   );
+
+-- Permisos explícitos: no depender de que el proyecto exponga solo las tablas nuevas a la API.
+-- anon solo puede SELECT y, sin política para anon, RLS le devuelve [] (lo usa el keep-alive).
+grant select, insert, update, delete on public.motos, public.movimientos to authenticated;
+grant select on public.motos to anon;

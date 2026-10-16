@@ -5,7 +5,7 @@
  */
 import { useParams } from 'react-router-dom';
 import { Encabezado } from '../componentes/Encabezado';
-import { Aviso, Cargando } from '../componentes/Estado';
+import { Cargando, ErrorCarga } from '../componentes/Estado';
 import { FormMovimiento } from '../componentes/FormMovimiento';
 import { obtenerMoto } from '../data/motos';
 import { obtenerMovimiento } from '../data/movimientos';
@@ -19,9 +19,9 @@ const TITULOS: Record<TipoMovimiento, { nuevo: string; editar: string }> = {
 
 export function NuevoMovimiento({ tipo }: { tipo: TipoMovimiento }) {
   const { id = '' } = useParams();
-  const { datos: moto, error, cargando } = useDatos(() => obtenerMoto(id), [id]);
+  const { datos: moto, error, cargando, recargar } = useDatos(() => obtenerMoto(id), [id]);
   if (cargando && !moto) return <Cargando />;
-  if (!moto) return <main className="pantalla"><Aviso>{error ?? 'No se encontró la moto.'}</Aviso></main>;
+  if (!moto) return <ErrorCarga titulo={TITULOS[tipo].nuevo} volverA={`/motos/${id}`} mensaje={error ?? 'No se encontró la moto.'} onReintentar={recargar} />;
   return (
     <main className="pantalla">
       <Encabezado titulo={TITULOS[tipo].nuevo} volverA={`/motos/${moto.id}`} />
@@ -35,12 +35,12 @@ export function NuevoMovimiento({ tipo }: { tipo: TipoMovimiento }) {
 
 export function EditarMovimiento() {
   const { id = '' } = useParams();
-  const { datos, error, cargando } = useDatos(async () => {
+  const { datos, error, cargando, recargar } = useDatos(async () => {
     const movimiento = await obtenerMovimiento(id);
     return { movimiento, moto: await obtenerMoto(movimiento.moto_id) };
   }, [id]);
   if (cargando && !datos) return <Cargando />;
-  if (!datos) return <main className="pantalla"><Aviso>{error ?? 'No se encontró el movimiento.'}</Aviso></main>;
+  if (!datos) return <ErrorCarga titulo="Movimiento" volverA="/" mensaje={error ?? 'No se encontró el movimiento.'} onReintentar={recargar} />;
   const { movimiento, moto } = datos;
   return (
     <main className="pantalla">

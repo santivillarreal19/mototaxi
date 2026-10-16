@@ -8,7 +8,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Campo } from '../componentes/Campo';
 import { CampoMonto } from '../componentes/CampoMonto';
 import { Encabezado } from '../componentes/Encabezado';
-import { Aviso, Cargando } from '../componentes/Estado';
+import { Aviso, Cargando, ErrorCarga } from '../componentes/Estado';
 import { aErrorApp } from '../data/errores';
 import { actualizarMoto, crearMoto, obtenerMoto } from '../data/motos';
 import { supabase } from '../data/supabase';
@@ -19,9 +19,9 @@ import { formatearTelefono, normalizarTelefono } from '../lib/whatsapp';
 
 export function FormMoto() {
   const { id } = useParams();
-  const { datos, error, cargando } = useDatos(async () => (id ? obtenerMoto(id) : null), [id]);
+  const { datos, error, cargando, recargar } = useDatos(async () => (id ? obtenerMoto(id) : null), [id]);
   if (id && cargando) return <Cargando />;
-  if (id && !datos) return <main className="pantalla"><Aviso>{error ?? 'No se encontró la moto.'}</Aviso></main>;
+  if (id && !datos) return <ErrorCarga titulo="Editar moto" volverA="/motos" mensaje={error ?? 'No se encontró la moto.'} onReintentar={recargar} />;
   return <FormularioMoto existente={datos ?? undefined} />;
 }
 
