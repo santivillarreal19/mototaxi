@@ -35,7 +35,7 @@ export function Login() {
     <main className="pantalla">
       <header className="encabezado">
         <span />
-        <h1>Mototaxi</h1>
+        <h1>Alquiler Motos C.V</h1>
         <span />
       </header>
       <form onSubmit={entrar} className="tarjeta">

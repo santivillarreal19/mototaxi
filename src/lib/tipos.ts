@@ -1,23 +1,15 @@
 /**
- * Tipos del dominio. Reflejan las columnas de las tablas `motos` y `movimientos`
- * (ver supabase/migrations/20261015120000_esquema_inicial.sql). Si cambia la migración,
- * cambiar aquí también: no se generan tipos automáticamente desde Supabase en la v1.
+ * Tipos del dominio. Reflejan las columnas de las tablas `motos`, `movimientos` y
+ * `categorias_gasto` (ver supabase/migrations/). Si cambia una migración, cambiar aquí
+ * también: no se generan tipos automáticamente desde Supabase.
  */
 
 export type TipoMovimiento = 'pago' | 'gasto';
 
-export type CategoriaGasto = 'mantenimiento' | 'repuestos' | 'combustible' | 'soat_impuestos' | 'otro';
-
-export const CATEGORIAS_GASTO: { valor: CategoriaGasto; etiqueta: string }[] = [
-  { valor: 'mantenimiento', etiqueta: 'Mantenimiento' },
-  { valor: 'repuestos', etiqueta: 'Repuestos' },
-  { valor: 'combustible', etiqueta: 'Combustible' },
-  { valor: 'soat_impuestos', etiqueta: 'SOAT / impuestos' },
-  { valor: 'otro', etiqueta: 'Otro' },
-];
-
-export function etiquetaCategoria(c: CategoriaGasto | null): string {
-  return CATEGORIAS_GASTO.find((x) => x.valor === c)?.etiqueta ?? 'Gasto';
+/** Categoría de gasto: cada usuario crea las suyas (desde 2026-10-16; antes eran 5 fijas). */
+export interface CategoriaGasto {
+  id: string;
+  nombre: string;
 }
 
 export interface Moto {
@@ -39,9 +31,17 @@ export interface Movimiento {
   tipo: TipoMovimiento;
   fecha: string;
   monto: number;
-  categoria: CategoriaGasto | null;
+  categoria_id: string | null;
+  /** Días de un mismo pago (uno o varios). Null en gastos y en pagos anteriores al 2026-10-16. */
+  grupo_id: string | null;
   nota: string | null;
   created_at: string;
+  /** Nombre de la categoría, traído junto con el movimiento (embed de PostgREST). */
+  categoria: { nombre: string } | null;
 }
 
-export type MovimientoNuevo = Omit<Movimiento, 'id' | 'created_at'>;
+export type MovimientoNuevo = Omit<Movimiento, 'id' | 'created_at' | 'categoria'>;
+
+export function etiquetaCategoria(m: Pick<Movimiento, 'categoria'>): string {
+  return m.categoria?.nombre ?? 'Gasto';
+}

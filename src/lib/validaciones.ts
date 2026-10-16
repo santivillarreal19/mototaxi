@@ -5,6 +5,7 @@
  * Nota: las reglas de placa y teléfono coinciden con los CHECK de la migración
  * supabase/migrations/20261015120000_esquema_inicial.sql; si cambian, cambiar ambas.
  */
+import { sumarDias } from './fechas';
 import { normalizarTelefono } from './whatsapp';
 
 export const MONTO_MAXIMO = 50_000_000;
@@ -28,9 +29,12 @@ export function validarMonto(n: number | null): string | null {
   return null;
 }
 
-export function validarFecha(iso: string, hoy: string): string | null {
+/** `diasAdelante`: 0 para gastos (nada futuro); los pagos admiten hasta 14 días adelantados. */
+export function validarFecha(iso: string, hoy: string, diasAdelante = 0): string | null {
   if (iso === '') return 'Elige la fecha';
-  if (iso > hoy) return 'La fecha no puede ser futura';
+  if (iso > sumarDias(hoy, diasAdelante)) {
+    return diasAdelante === 0 ? 'La fecha no puede ser futura' : `Máximo ${diasAdelante} días por adelantado`;
+  }
   return null;
 }
 

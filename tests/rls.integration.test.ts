@@ -1,7 +1,8 @@
 /**
  * Prueba de integración de RLS contra el proyecto Supabase real.
  *
- * Verifica que un usuario (B) no puede ver, modificar ni usar los datos de otro (A).
+ * Verifica que un usuario (B) no puede ver, modificar ni usar los datos de otro (A),
+ * incluidas sus categorías de gasto (requiere la migración 20261016120000 aplicada).
  * Se SALTA sola si faltan credenciales, por eso `npm test` y el CI no la necesitan.
  * Para correrla: crear `.env.test.local` (ignorado por git) con RLS_URL, RLS_ANON_KEY,
  * RLS_A_EMAIL, RLS_A_PASS, RLS_B_EMAIL y RLS_B_PASS (dos usuarios de prueba, NO el del
@@ -84,6 +85,33 @@ describe.skipIf(!configurado)('RLS: aislamiento entre usuarios', () => {
       encargado_telefono: '573001112233',
     });
     expect(error).not.toBeNull();
+  });
+
+  it('B no ve las categorías de gasto de A', async () => {
+    const { data: deA } = await a.from('categorias_gasto').select('id').limit(1).single();
+    expect(deA).not.toBeNull(); // la migración le sembró las 5 iniciales
+    const { data } = await b.from('categorias_gasto').select('id').eq('id', deA!.id);
+    expect(data).toEqual([]);
+  });
+
+  it('B no puede registrar un gasto con una categoría de A', async () => {
+    const { data: categoriaA } = await a.from('categorias_gasto').select('id').limit(1).single();
+    await b.from('motos').delete().eq('placa', 'RLS03B');
+    const { data: motoB, error } = await b
+      .from('motos')
+      .insert({ placa: 'RLS03B', tarifa_diaria: 1000, encargado_nombre: 'Prueba', encargado_telefono: '573001112233' })
+      .select('id')
+      .single();
+    if (error) throw error;
+    try {
+      const { error: errGasto } = await b
+        .from('movimientos')
+        .insert({ moto_id: motoB.id, tipo: 'gasto', fecha: '2026-10-15', monto: 1000, categoria_id: categoriaA!.id });
+      expect(errGasto).not.toBeNull();
+    } finally {
+      await b.from('movimientos').delete().eq('moto_id', motoB.id);
+      await b.from('motos').delete().eq('id', motoB.id);
+    }
   });
 
   it('sin sesión no se ve nada', async () => {

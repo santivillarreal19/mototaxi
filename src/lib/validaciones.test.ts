@@ -53,6 +53,10 @@ describe('validarFecha', () => {
   it('rechaza fechas futuras', () => {
     expect(validarFecha('2026-10-16', '2026-10-15')).toBe('La fecha no puede ser futura');
   });
+  it('permite fechas adelante solo hasta el límite dado', () => {
+    expect(validarFecha('2026-10-29', '2026-10-15', 14)).toBeNull();
+    expect(validarFecha('2026-10-30', '2026-10-15', 14)).toBe('Máximo 14 días por adelantado');
+  });
   it('acepta hoy y días pasados', () => {
     expect(validarFecha('2026-10-15', '2026-10-15')).toBeNull();
     expect(validarFecha('2025-01-01', '2026-10-15')).toBeNull();

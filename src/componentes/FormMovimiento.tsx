@@ -1,31 +1,41 @@
 /**
- * Formulario de pago o gasto, para crear o editar.
- * - Pago nuevo: el monto se precarga con la tarifa diaria. Al guardar va a
- *   /pago-registrado/:id, donde está el botón de WhatsApp.
+ * Formulario de gasto (crear o editar) y de edición de un pago (un día).
+ * - El pago NUEVO no usa este formulario sino FormPagoNuevo (puede cubrir varios días).
+ * - Gasto: la categoría sale de las categorías del usuario (data/categorias.ts); la opción
+ *   "+ Nueva categoría…" la crea ahí mismo sin salir del formulario.
+ * - Fecha: un gasto no puede ser futuro; un pago admite hasta 14 días adelantados.
  * - Editar NO reenvía el mensaje. Eliminar pide confirmación.
  * - En un error de guardado (p. ej. sin señal) los campos se conservan para reintentar, y el
- *   id generado una sola vez evita duplicar el pago si el primer intento sí llegó.
- * - El pago guardado viaja en el estado de la navegación (ver lib/confirmacion.ts).
+ *   id generado una sola vez evita duplicar el gasto si el primer intento sí llegó.
  */
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { aErrorApp } from '../data/errores';
+import { crearCategoria, listarCategorias } from '../data/categorias';
 import { actualizarMovimiento, crearMovimiento, eliminarMovimiento } from '../data/movimientos';
 import { supabase } from '../data/supabase';
-import { hoyISO } from '../lib/fechas';
+import { useDatos } from '../hooks/useDatos';
+import { DIAS_MAXIMOS } from '../lib/adelantos';
+import { hoyISO, sumarDias } from '../lib/fechas';
 import { nuevoId } from '../lib/ids';
-import { CATEGORIAS_GASTO, type CategoriaGasto, type Moto, type Movimiento, type TipoMovimiento } from '../lib/tipos';
+import type { CategoriaGasto, Moto, Movimiento, TipoMovimiento } from '../lib/tipos';
 import { validarFecha, validarMonto } from '../lib/validaciones';
 import { Campo } from './Campo';
 import { CampoMonto } from './CampoMonto';
 import { Aviso } from './Estado';
 
+const NUEVA = '__nueva__';
+
 export function FormMovimiento({ moto, tipo, existente }: { moto: Moto; tipo: TipoMovimiento; existente?: Movimiento }) {
   const navigate = useNavigate();
   const hoy = hoyISO();
+  const diasAdelante = tipo === 'pago' ? DIAS_MAXIMOS : 0;
   const [fecha, setFecha] = useState(existente?.fecha ?? hoy);
-  const [monto, setMonto] = useState<number | null>(existente?.monto ?? (tipo === 'pago' ? moto.tarifa_diaria : null));
-  const [categoria, setCategoria] = useState<CategoriaGasto | ''>(existente?.categoria ?? '');
+  const [monto, setMonto] = useState<number | null>(existente?.monto ?? null);
+  const [categoria, setCategoria] = useState(existente?.categoria_id ?? '');
+  const cargadas = useDatos(() => (tipo === 'gasto' ? listarCategorias() : Promise.resolve([])), [tipo]);
+  const [creadas, setCreadas] = useState<CategoriaGasto[]>([]);
+  const categorias = [...(cargadas.datos ?? []), ...creadas.filter((c) => !cargadas.datos?.some((x) => x.id === c.id))];
   const [nota, setNota] = useState(existente?.nota ?? '');
   const [errores, setErrores] = useState<Record<string, string | null>>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
@@ -37,7 +47,7 @@ export function FormMovimiento({ moto, tipo, existente }: { moto: Moto; tipo: Ti
   async function guardar(e: FormEvent) {
     e.preventDefault();
     const nuevos = {
-      fecha: validarFecha(fecha, hoy),
+      fecha: validarFecha(fecha, hoy, diasAdelante),
       monto: validarMonto(monto),
       categoria: tipo === 'gasto' && categoria === '' ? 'Elige una categoría' : null,
     };
@@ -49,7 +59,8 @@ export function FormMovimiento({ moto, tipo, existente }: { moto: Moto; tipo: Ti
       tipo,
       fecha,
       monto: monto!,
-      categoria: tipo === 'gasto' ? (categoria as CategoriaGasto) : null,
+      categoria_id: tipo === 'gasto' ? categoria : null,
+      grupo_id: existente?.grupo_id ?? null,
       nota: nota.trim() || null,
     };
     setGuardando(true);
@@ -59,9 +70,8 @@ export function FormMovimiento({ moto, tipo, existente }: { moto: Moto; tipo: Ti
         await actualizarMovimiento(existente.id, datos);
         navigate(volver, { replace: true });
       } else {
-        const creado = await crearMovimiento(datos, idNuevo);
-        if (tipo === 'pago') navigate(`/pago-registrado/${creado.id}`, { replace: true, state: { movimiento: creado, moto } });
-        else navigate(volver, { replace: true });
+        await crearMovimiento(datos, idNuevo);
+        navigate(volver, { replace: true });
       }
     } catch (err) {
       const app = aErrorApp(err);
@@ -69,6 +79,24 @@ export function FormMovimiento({ moto, tipo, existente }: { moto: Moto; tipo: Ti
       if (app.tipo === 'sesion') await supabase.auth.signOut();
     } finally {
       setGuardando(false);
+    }
+  }
+
+  async function elegirCategoria(valor: string) {
+    if (valor !== NUEVA) {
+      setCategoria(valor);
+      return;
+    }
+    const nombre = window.prompt('Nombre de la nueva categoría')?.trim();
+    if (!nombre) return;
+    try {
+      const nueva = await crearCategoria(nombre);
+      setCreadas((c) => [...c, nueva]);
+      setCategoria(nueva.id);
+      setErrores((e) => ({ ...e, categoria: null }));
+    } catch (err) {
+      const app = aErrorApp(err);
+      setErrores((e) => ({ ...e, categoria: app.tipo === 'duplicado' ? 'Ya tienes una categoría con ese nombre' : app.message }));
     }
   }
 
@@ -87,19 +115,21 @@ export function FormMovimiento({ moto, tipo, existente }: { moto: Moto; tipo: Ti
   return (
     <form onSubmit={guardar} noValidate>
       {errorGeneral && <Aviso>{errorGeneral}</Aviso>}
+      {cargadas.error && <Aviso onReintentar={cargadas.recargar}>{cargadas.error}</Aviso>}
       <Campo id="fecha" etiqueta="Fecha" error={errores.fecha}>
-        <input id="fecha" type="date" value={fecha} max={hoy} onChange={(e) => setFecha(e.target.value)} aria-invalid={Boolean(errores.fecha)} />
+        <input id="fecha" type="date" value={fecha} max={sumarDias(hoy, diasAdelante)} onChange={(e) => setFecha(e.target.value)} aria-invalid={Boolean(errores.fecha)} />
       </Campo>
       <CampoMonto id="monto" etiqueta="Monto ($)" valor={monto} onCambio={setMonto} error={errores.monto} />
       {tipo === 'gasto' && (
         <Campo id="categoria" etiqueta="Categoría" error={errores.categoria}>
-          <select id="categoria" value={categoria} onChange={(e) => setCategoria(e.target.value as CategoriaGasto | '')} aria-invalid={Boolean(errores.categoria)}>
-            <option value="">Elige…</option>
-            {CATEGORIAS_GASTO.map((c) => (
-              <option key={c.valor} value={c.valor}>
-                {c.etiqueta}
+          <select id="categoria" value={categoria} onChange={(e) => void elegirCategoria(e.target.value)} aria-invalid={Boolean(errores.categoria)}>
+            <option value="">{cargadas.cargando && !cargadas.datos ? 'Cargando…' : 'Elige…'}</option>
+            {categorias.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nombre}
               </option>
             ))}
+            <option value={NUEVA}>+ Nueva categoría…</option>
           </select>
         </Campo>
       )}

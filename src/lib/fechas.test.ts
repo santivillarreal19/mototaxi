@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { esPeriodo, formatearFecha, hoyISO, rangoPeriodo } from './fechas';
+import { esPeriodo, formatearDiaCorto, formatearFecha, hoyISO, rangoPeriodo, sumarDias } from './fechas';
 
 describe('hoyISO', () => {
   it('usa la hora de Colombia, no UTC', () => {
@@ -38,5 +38,21 @@ describe('esPeriodo', () => {
     expect(esPeriodo('todo')).toBe(true);
     expect(esPeriodo('semana')).toBe(false);
     expect(esPeriodo(null)).toBe(false);
+  });
+});
+
+describe('sumarDias', () => {
+  it('suma y resta días cruzando meses y años', () => {
+    expect(sumarDias('2026-10-16', 14)).toBe('2026-10-30');
+    expect(sumarDias('2026-10-25', 14)).toBe('2026-11-08');
+    expect(sumarDias('2026-01-05', -14)).toBe('2025-12-22');
+  });
+});
+
+describe('formatearDiaCorto', () => {
+  it('muestra día de la semana y dd/mm', () => {
+    expect(formatearDiaCorto('2026-10-19')).toBe('lun 19/10');
+    expect(formatearDiaCorto('2026-10-21')).toBe('mié 21/10');
+    expect(formatearDiaCorto('2026-10-25')).toBe('dom 25/10');
   });
 });

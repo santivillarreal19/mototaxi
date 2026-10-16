@@ -28,8 +28,8 @@ describe('totalesPorMoto', () => {
 });
 
 describe('etiquetaCategoria', () => {
-  it('traduce la categoría o cae en "Gasto"', () => {
-    expect(etiquetaCategoria('soat_impuestos')).toBe('SOAT / impuestos');
-    expect(etiquetaCategoria(null)).toBe('Gasto');
+  it('usa el nombre de la categoría del usuario o cae en "Gasto"', () => {
+    expect(etiquetaCategoria({ categoria: { nombre: 'SOAT / impuestos' } })).toBe('SOAT / impuestos');
+    expect(etiquetaCategoria({ categoria: null })).toBe('Gasto');
   });
 });

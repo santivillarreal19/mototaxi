@@ -1,12 +1,14 @@
 /**
  * Pantallas contenedoras del formulario de movimiento:
- * - NuevoMovimiento (/motos/:id/pago y /motos/:id/gasto): carga la moto.
+ * - NuevoMovimiento (/motos/:id/pago y /motos/:id/gasto): carga la moto. El pago nuevo usa
+ *   FormPagoNuevo (puede cubrir varios días); el gasto, FormMovimiento.
  * - EditarMovimiento (/movimientos/:id/editar): carga el movimiento y luego su moto.
  */
 import { useParams } from 'react-router-dom';
 import { Encabezado } from '../componentes/Encabezado';
 import { Cargando, ErrorCarga } from '../componentes/Estado';
 import { FormMovimiento } from '../componentes/FormMovimiento';
+import { FormPagoNuevo } from '../componentes/FormPagoNuevo';
 import { obtenerMoto } from '../data/motos';
 import { obtenerMovimiento } from '../data/movimientos';
 import { useDatos } from '../hooks/useDatos';
@@ -28,7 +30,7 @@ export function NuevoMovimiento({ tipo }: { tipo: TipoMovimiento }) {
       <p className="subtitulo">
         {moto.placa} · {moto.encargado_nombre}
       </p>
-      <FormMovimiento moto={moto} tipo={tipo} />
+      {tipo === 'pago' ? <FormPagoNuevo moto={moto} /> : <FormMovimiento moto={moto} tipo={tipo} />}
     </main>
   );
 }

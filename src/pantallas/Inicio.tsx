@@ -28,7 +28,7 @@ export function Inicio() {
 
   return (
     <main className="pantalla">
-      <Encabezado titulo="Mototaxi" accion={<Link to="/motos">Motos</Link>} />
+      <Encabezado titulo="Alquiler Motos C.V" accion={<Link to="/motos">Motos</Link>} />
       <SelectorPeriodo valor={periodo} onCambio={cambiarPeriodo} />
       {error && <Aviso onReintentar={recargar}>{error}</Aviso>}
       {cargando && !datos && <Cargando />}

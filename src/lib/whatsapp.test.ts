@@ -26,8 +26,20 @@ describe('formatearTelefono', () => {
 
 describe('mensajePago', () => {
   it('arma el texto exacto acordado', () => {
-    expect(mensajePago({ nombre: 'Juan', placa: 'ABC12D', fecha: '2026-10-15', monto: 35000 })).toBe(
+    expect(mensajePago({ nombre: 'Juan', placa: 'ABC12D', fechas: ['2026-10-15'], monto: 35000 })).toBe(
       'Hola Juan, se registró tu pago de alquiler de la moto ABC12D del día 15/10/2026 por $35.000. ¡Gracias!',
+    );
+  });
+  it('con varios días lista los días cubiertos en orden y el total pagado', () => {
+    expect(
+      mensajePago({ nombre: 'Juan', placa: 'ABC12D', fechas: ['2026-10-23', '2026-10-19', '2026-10-21'], monto: 84000 }),
+    ).toBe(
+      'Hola Juan, se registró tu pago de alquiler de la moto ABC12D por $84.000, que cubre los días lun 19/10, mié 21/10 y vie 23/10. ¡Gracias!',
+    );
+  });
+  it('con dos días los une con "y"', () => {
+    expect(mensajePago({ nombre: 'Ana', placa: 'XYZ98A', fechas: ['2026-10-19', '2026-10-20'], monto: 56000 })).toContain(
+      'los días lun 19/10 y mar 20/10.',
     );
   });
 });

@@ -7,13 +7,14 @@
  * supabase-js a veces devuelve objetos planos {code, message}, no instancias de Error.
  */
 
-export type TipoError = 'sin_conexion' | 'duplicado' | 'sesion' | 'credenciales' | 'no_encontrado' | 'desconocido';
+export type TipoError = 'sin_conexion' | 'duplicado' | 'en_uso' | 'sesion' | 'credenciales' | 'no_encontrado' | 'desconocido';
 
 const MENSAJES: Record<TipoError, string> = {
   // Al guardar sin red no se puede saber si el servidor alcanzó a recibirlo; reintentar es
   // seguro porque los movimientos se crean con id del cliente (ver data/idempotencia.ts).
   sin_conexion: 'No hay conexión a internet. Revisa la señal y toca Guardar de nuevo.',
   duplicado: 'Ya existe un registro igual.',
+  en_uso: 'No se puede borrar porque tiene registros asociados.',
   sesion: 'Tu sesión venció. Vuelve a iniciar sesión.',
   credenciales: 'Correo o contraseña incorrectos.',
   no_encontrado: 'No se encontró el registro.',
@@ -50,6 +51,7 @@ export function aErrorApp(
   let tipo: TipoError = 'desconocido';
   if (!enLinea || /failed to fetch|load failed|network/i.test(texto)) tipo = 'sin_conexion';
   else if (codigo === '23505') tipo = 'duplicado';
+  else if (codigo === '23503') tipo = 'en_uso';
   else if (codigo === 'PGRST301' || /jwt/i.test(texto)) tipo = 'sesion';
   else if (codigo === 'invalid_credentials' || /invalid login credentials/i.test(texto)) tipo = 'credenciales';
   else if (codigo === 'PGRST116') tipo = 'no_encontrado';

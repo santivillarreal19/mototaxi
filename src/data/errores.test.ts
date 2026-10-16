@@ -18,6 +18,11 @@ describe('aErrorApp', () => {
   it('si el navegador dice que está offline, gana eso', () => {
     expect(aErrorApp({ message: 'cualquier cosa', code: 'XX' }, false).tipo).toBe('sin_conexion');
   });
+  it('traduce el borrado de algo que otros registros usan (llave foránea)', () => {
+    const err = aErrorApp({ code: '23503', message: 'violates foreign key constraint' }, true);
+    expect(err.tipo).toBe('en_uso');
+    expect(err.message).toBe('No se puede borrar porque tiene registros asociados.');
+  });
   it('traduce duplicados de Postgres', () => {
     expect(aErrorApp({ code: '23505', message: 'duplicate key value' }, true).tipo).toBe('duplicado');
   });

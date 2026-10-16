@@ -59,3 +59,24 @@ export function rangoPeriodo(periodo: Periodo, hoy: string): { desde: string | n
   const prefijo = `${anio}-${dosDigitos(mes)}`;
   return { desde: `${prefijo}-01`, hasta: `${prefijo}-${dosDigitos(ultimoDia(anio, mes))}` };
 }
+
+/** Suma (o resta, con n negativo) días a una fecha ISO. Se calcula en UTC: sin saltos de zona horaria. */
+export function sumarDias(iso: string, n: number): string {
+  const [anio, mes, dia] = iso.split('-').map(Number);
+  const d = new Date(Date.UTC(anio, mes - 1, dia + n));
+  return `${d.getUTCFullYear()}-${dosDigitos(d.getUTCMonth() + 1)}-${dosDigitos(d.getUTCDate())}`;
+}
+
+const DIAS_SEMANA = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+
+/** 0 = domingo … 6 = sábado. */
+export function diaSemana(iso: string): number {
+  const [anio, mes, dia] = iso.split('-').map(Number);
+  return new Date(Date.UTC(anio, mes - 1, dia)).getUTCDay();
+}
+
+/** "lun 19/10": para listar días cubiertos por un pago sin alargar el mensaje. */
+export function formatearDiaCorto(iso: string): string {
+  const [, mes, dia] = iso.split('-');
+  return `${DIAS_SEMANA[diaSemana(iso)]} ${dia}/${mes}`;
+}

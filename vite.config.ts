@@ -19,8 +19,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       pwaAssets: { config: true, overrideManifestIcons: true },
       manifest: {
-        name: 'Mototaxi — cuentas de alquiler',
-        short_name: 'Mototaxi',
+        name: 'Alquiler Motos C.V',
+        short_name: 'Alquiler Motos',
         description: 'Pagos, gastos y ganancias de tus motos',
         lang: 'es-CO',
         start_url: '/',

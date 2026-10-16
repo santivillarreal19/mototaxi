@@ -49,7 +49,7 @@ export function DetalleMoto() {
             <li key={m.id}>
               <Link to={`/movimientos/${m.id}/editar`}>
                 <span>
-                  {m.tipo === 'pago' ? 'Pago alquiler' : etiquetaCategoria(m.categoria)}
+                  {m.tipo === 'pago' ? 'Pago alquiler' : etiquetaCategoria(m)}
                   <small>
                     {formatearFecha(m.fecha)}
                     {m.nota ? ` · ${m.nota}` : ''}

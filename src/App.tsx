@@ -3,6 +3,7 @@
  */
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { RutaProtegida } from './auth/RutaProtegida';
+import { Categorias } from './pantallas/Categorias';
 import { DetalleMoto } from './pantallas/DetalleMoto';
 import { FormMoto } from './pantallas/FormMoto';
 import { Inicio } from './pantallas/Inicio';
@@ -25,6 +26,7 @@ export function App() {
         <Route path="/motos/:id/gasto" element={<NuevoMovimiento tipo="gasto" />} />
         <Route path="/movimientos/:id/editar" element={<EditarMovimiento />} />
         <Route path="/pago-registrado/:id" element={<PagoRegistrado />} />
+        <Route path="/categorias" element={<Categorias />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

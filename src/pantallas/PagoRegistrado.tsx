@@ -1,5 +1,6 @@
 /**
- * Confirmación de pago guardado, con el botón para avisarle al encargado por WhatsApp.
+ * Confirmación de pago guardado (uno o varios días), con el botón para avisarle al
+ * encargado por WhatsApp. El mensaje lleva el total y los días cubiertos.
  * El enlace es un <a> que toca el usuario: iOS bloquea abrir otra app por código.
  * Si WhatsApp no abre, "Copiar mensaje" deja el texto en el portapapeles; si el
  * portapapeles falla, se muestra el texto seleccionable.
@@ -11,11 +12,11 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { Encabezado } from '../componentes/Encabezado';
 import { Cargando, ErrorCarga } from '../componentes/Estado';
 import { obtenerMoto } from '../data/motos';
-import { obtenerMovimiento } from '../data/movimientos';
+import { listarGrupo, obtenerMovimiento } from '../data/movimientos';
 import { useDatos } from '../hooks/useDatos';
 import { pagoDesdeEstado } from '../lib/confirmacion';
 import { formatearPesos } from '../lib/dinero';
-import { formatearFecha } from '../lib/fechas';
+import { formatearDiaCorto, formatearFecha } from '../lib/fechas';
 import { enlaceWhatsApp, mensajePago } from '../lib/whatsapp';
 
 export function PagoRegistrado() {
@@ -26,13 +27,19 @@ export function PagoRegistrado() {
     const recienGuardado = pagoDesdeEstado(location.state, id);
     if (recienGuardado) return recienGuardado;
     const movimiento = await obtenerMovimiento(id);
-    return { movimiento, moto: await obtenerMoto(movimiento.moto_id) };
+    const [movimientos, moto] = await Promise.all([
+      movimiento.grupo_id ? listarGrupo(movimiento.grupo_id) : [movimiento],
+      obtenerMoto(movimiento.moto_id),
+    ]);
+    return { movimientos, moto };
   }, [id]);
 
   if (cargando && !datos) return <Cargando />;
   if (!datos) return <ErrorCarga titulo="Pago" volverA="/" mensaje={error ?? 'No se encontró el pago.'} onReintentar={recargar} />;
-  const { movimiento, moto } = datos;
-  const texto = mensajePago({ nombre: moto.encargado_nombre, placa: moto.placa, fecha: movimiento.fecha, monto: movimiento.monto });
+  const { movimientos, moto } = datos;
+  const fechas = movimientos.map((m) => m.fecha).sort();
+  const total = movimientos.reduce((suma, m) => suma + m.monto, 0);
+  const texto = mensajePago({ nombre: moto.encargado_nombre, placa: moto.placa, fechas, monto: total });
 
   async function copiar() {
     try {
@@ -48,9 +55,9 @@ export function PagoRegistrado() {
       <Encabezado titulo="Pago registrado" volverA={`/motos/${moto.id}`} />
       <section className="tarjeta">
         <p className="etiqueta">Guardado</p>
-        <p className="neto ingreso">{formatearPesos(movimiento.monto)}</p>
+        <p className="neto ingreso">{formatearPesos(total)}</p>
         <p>
-          {moto.placa} · {formatearFecha(movimiento.fecha)}
+          {moto.placa} · {fechas.length === 1 ? formatearFecha(fechas[0]) : `${fechas.length} días: ${fechas.map(formatearDiaCorto).join(', ')}`}
         </p>
       </section>
       <p className="etiqueta">Mensaje para {moto.encargado_nombre}</p>
