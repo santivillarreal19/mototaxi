@@ -88,7 +88,7 @@ Detalle completo: [spec de diseño](docs/superpowers/specs/2026-10-15-mototaxi-d
 | 1 | Implementación v1 (motos, pagos, gastos, totales, WhatsApp, PWA) y despliegue | ✅ Desplegada (2026-10-16) |
 | 2 | Pedidos del cliente: nombre "Alquiler Motos C.V", categorías de gasto propias, pago de varios días | ✅ Desplegada (2026-10-16) — falta verificar RLS de categorías |
 | 3 | Guía de operación y repo público para portafolio | ✅ Completada (2026-10-16) |
-| 4 | Caja: saldo inicial/agregado y préstamos a encargados con abonos | 🚧 Código completo, migración y deploy pendientes |
+| 4 | Caja: saldo inicial/agregado y préstamos a encargados con abonos | ✅ Desplegada (2026-10-16) |
 
 ## Bitácora de iteraciones
 
@@ -177,7 +177,7 @@ Detalle completo: [spec de diseño](docs/superpowers/specs/2026-10-15-mototaxi-d
 
 #### ⏳ Diferido — NO perder
 - ~~⏳ **Aplicar la migración y publicar**~~ → hecho el 2026-10-16. Migración verificada con el usuario de prueba A: 5 categorías sembradas, columna `categoria` eliminada y sus 2 gastos con `categoria_id`.
-- ⏳ **Correr `npm run test:rls` completo** — se saltó porque la clave del usuario de prueba B en `.env.test.local` quedó inválida (1 carácter). Corregirla y volver a correr: deben pasar 7 de 7.
+- ~~⏳ **Correr `npm run test:rls` completo**~~ → hecho el 2026-10-16. `.env.test.local` usa ahora dos usuarios solo de prueba (`@mototaxi.test`): ni la cuenta del cliente ni la de Santiago. 9/9.
 - ⏳ **Pantalla "Mi cuenta" para cambiar la contraseña** — los correos de los usuarios no son reales, así que la recuperación por correo no funciona. Hoy se cambia desde el SQL Editor de Supabase. Retomar si los cambios de contraseña se vuelven frecuentes.
 - ⏳ **Variables de Cloudflare para Preview** — solo se cargaron las de Production, así que las URLs de vista previa de ramas no tienen Supabase. Retomar si se quieren usar las previews para probar.
 - ⏳ **Pago de varios días con fechas de hace más de 14 días** — el calendario no las ofrece. Se puede registrar el pago y luego editar su fecha. Retomar si hace falta.
@@ -215,7 +215,7 @@ Suite: **84 tests** unitarios (baseline 65 + 19 nuevos). RLS: 7 (5 + 2 de catego
 | | |
 |---|---|
 | **Fecha** | 2026-10-16 |
-| **Estado** | 🚧 Código completo en la rama `feat/caja-2026-10-16`. Falta aplicar la migración y publicar |
+| **Estado** | ✅ Desplegada (2026-10-16): migraciones aplicadas, RLS 9/9 y `main` publicado |
 | **Objetivo** | El cliente ya tenía $628.000 antes de usar la app y quiere verlos como saldo. Además, a veces los encargados le piden préstamos, y quiere que quede registro de ellos. |
 
 #### Qué se hizo
@@ -235,7 +235,7 @@ Suite: **84 tests** unitarios (baseline 65 + 19 nuevos). RLS: 7 (5 + 2 de catego
 - Saldo, préstamos y abonos **no** entran en la ganancia por moto ni en los totales por período.
 
 #### ⏳ Diferido — NO perder
-- ⏳ **Aplicar y publicar, en este orden:** `npx supabase db push` (migraciones 20261016130000 y 20261016140000) → `npm run test:rls` → integrar a `main`. Al revés no funciona: el código nuevo consulta `caja`, y si se publica antes de la migración el inicio falla.
+- ~~⏳ **Aplicar y publicar**~~ → hecho el 2026-10-16 (migraciones 20261016130000 y 20261016140000, `npm run test:rls` 9/9).
 - ⏳ **Cargar los $628.000** en la cuenta del cliente: Caja → "+ Agregar saldo", con fecha de hoy.
 - ⏳ **WhatsApp al encargado por préstamos o abonos** — no se pidió. Retomar si el cliente quiere constancia para el encargado.
 - ⏳ **Intereses de préstamos** — no se pidió; hoy un préstamo es solo capital.
