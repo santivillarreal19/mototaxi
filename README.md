@@ -4,6 +4,16 @@ App web instalable (PWA), publicada como **Alquiler Motos C.V** en https://motot
 
 > Este README es **bitácora viva del proyecto**. Cada iteración suma una sección al final con lo que se hizo, las decisiones tomadas, problemas encontrados y pendientes. Está pensado para que cualquiera (incluyendo Claude en sesiones futuras) pueda recuperar contexto rápido.
 
+## Funcionalidades
+
+- **Varias motos**, cada una con placa, tarifa diaria y encargado (nombre y celular). Las motos que ya no trabajan se archivan sin perder su historial.
+- **Pagos de alquiler**, incluso **adelantados de varios días**: el monto dice cuántos días cubre y se marcan en un calendario.
+- **Confirmación por WhatsApp** al encargado, con el mensaje listo.
+- **Gastos** con categorías que crea cada usuario.
+- **Ganancia neta** (ingresos − gastos) general y por moto, por período (este mes, mes anterior, todo).
+- **Instalable en iPhone** desde Safari (PWA), sin App Store. Usable con mala señal: guardar dos veces no duplica pagos.
+- **Datos aislados por usuario** con Row Level Security de Postgres, verificados con pruebas de integración.
+
 ## Arquitectura general
 
 ```
@@ -52,6 +62,23 @@ GitHub Actions    ──► tests + keep-alive de Supabase (cron)
 
 Detalle completo: [spec de diseño](docs/superpowers/specs/2026-10-15-mototaxi-design.md).
 
+## Operación — qué cuidar para que no se caiga
+
+| Riesgo | Qué pasa | Cómo evitarlo / arreglarlo |
+|---|---|---|
+| **Supabase gratis se pausa** tras 7 días sin uso | La app abre pero no carga datos | El uso diario lo evita. El workflow [keepalive.yml](.github/workflows/keepalive.yml) consulta la base cada 3 días (necesita los secrets `SUPABASE_URL` y `SUPABASE_ANON_KEY`). Si se pausa: panel de Supabase → **Restore project**. Los datos no se pierden, pero **después de 90 días pausado ya no se puede reactivar desde el panel** |
+| **GitHub apaga los cron** de un repo con 60 días sin commits | El keep-alive deja de correr | GitHub → Actions → "Mantener Supabase activo" → **Enable workflow**, o hacer cualquier commit |
+| **Migración aplicada sin publicar el código** (o al revés) | La app falla porque busca columnas que ya no existen | Primero `npx supabase db push` y enseguida integrar a `main`, cuando el cliente no esté registrando. Nunca borrar ni renombrar columnas desde el panel |
+| **Variables de Cloudflare** mal cargadas | Pantalla en blanco | No tocar `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` ni `NODE_VERSION`. Si cambian: tipo Text, sin comillas, y **Retry deployment** |
+| **Push a `main` sin probar** | Se publica solo | Antes de integrar: `npm run typecheck && npm test && npm run build`. Trabajar en ramas. Un build fallido no tumba la app: queda la última versión buena |
+| **Perder acceso** a GitHub, Cloudflare o Supabase | Se pierde el control de esa parte | Verificación en dos pasos en las tres cuentas. No borrar el proyecto de Cloudflare, porque la URL podría cambiar |
+| **Node 22 sin soporte** (el log de Cloudflare ya lo advierte) | Algún día el build podría fallar | Subir `NODE_VERSION` en Cloudflare y `engines` en [package.json](package.json) a la siguiente LTS |
+
+**Editar datos a mano:** en Supabase → Table Editor. Una fila nueva debe llevar el `user_id` de su dueño (está en Authentication → Users). Para cambiar la contraseña de un usuario (los correos no son reales, así que la recuperación por correo no llega), usar el SQL Editor:
+`update auth.users set encrypted_password = crypt('ClaveNueva', gen_salt('bf')) where email = '...';`
+
+**Actualizaciones en el iPhone:** el código nuevo llega solo al abrir la app con internet (a veces tarda una apertura extra). Solo el **nombre bajo el ícono** exige borrar el ícono y volver a hacer "Agregar a inicio".
+
 ## Iteraciones planificadas
 
 | # | Objetivo | Estado |
@@ -59,6 +86,7 @@ Detalle completo: [spec de diseño](docs/superpowers/specs/2026-10-15-mototaxi-d
 | 0 | Diseño y spec | ✅ Completada |
 | 1 | Implementación v1 (motos, pagos, gastos, totales, WhatsApp, PWA) y despliegue | ✅ Desplegada (2026-10-16) |
 | 2 | Pedidos del cliente: nombre "Alquiler Motos C.V", categorías de gasto propias, pago de varios días | ✅ Desplegada (2026-10-16) — falta verificar RLS de categorías |
+| 3 | Guía de operación y repo público para portafolio | ✅ Completada (2026-10-16) |
 
 ## Bitácora de iteraciones
 
@@ -154,5 +182,28 @@ Detalle completo: [spec de diseño](docs/superpowers/specs/2026-10-15-mototaxi-d
 
 #### Tests
 Suite: **84 tests** unitarios (baseline 65 + 19 nuevos). RLS: 7 (5 + 2 de categorías). Los 2 nuevos fallan hasta aplicar la migración, como es de esperar.
+
+---
+
+### Iteración 3 — Guía de operación y repo público para portafolio
+
+| | |
+|---|---|
+| **Fecha** | 2026-10-16 |
+| **Estado** | ✅ Completada |
+| **Objetivo** | Dejar escrito qué cuidar para que el despliegue no se caiga (`keepalive.yml` remitía a una sección "Operación" que no existía) y publicar el repo en el portafolio de Santiago. |
+
+#### Qué se hizo
+- README: secciones **Funcionalidades** (resumen para el portafolio) y **Operación** (tabla de riesgos, edición manual de datos, actualizaciones en el iPhone).
+- Antes de abrir el repo se revisó todo el historial: no hay `.env`, claves, identificador del proyecto de Supabase ni correos.
+- Repo `santivillarreal19/mototaxi` cambiado a **público**, con descripción, URL y temas.
+
+#### Decisiones tomadas (con el usuario)
+- **Santiago:** repo público para el portafolio.
+- **Santiago:** el README conserva el nombre del negocio ("Alquiler Motos C.V") y la URL de producción, que igual pide iniciar sesión.
+
+#### ⏳ Diferido — NO perder
+- ⏳ **Cerrar el registro público en Supabase** — hallazgo del 2026-10-16: en el proyecto real `disable_signup` está en `false`, aunque la spec pedía deshabilitarlo. La URL y la clave anon viajan en la app publicada, así que cualquiera puede crear una cuenta. RLS impide que vea los datos del cliente, pero tendría cuenta en el proyecto. Arreglo: Supabase → Authentication → Sign In / Providers → desactivar **Allow new users to sign up**. Hacerlo desde el panel y **no** con `supabase config push`, porque el `config.toml` local tiene `enable_signup = true` y `site_url` de localhost y pisaría la configuración remota. Prioridad alta.
+- ⏳ **Sin licencia** en el repo. Por defecto, todos los derechos quedan reservados: se puede ver el código, pero no reutilizarlo. Agregar una licencia solo si se quiere permitir su uso.
 
 ---
