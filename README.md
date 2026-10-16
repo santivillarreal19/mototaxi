@@ -58,7 +58,7 @@ Detalle completo: [spec de diseño](docs/superpowers/specs/2026-10-15-mototaxi-d
 |---|---|---|
 | 0 | Diseño y spec | ✅ Completada |
 | 1 | Implementación v1 (motos, pagos, gastos, totales, WhatsApp, PWA) y despliegue | ✅ Desplegada (2026-10-16) |
-| 2 | Pedidos del cliente: nombre "Alquiler Motos C.V", categorías de gasto propias, pago de varios días | 🚧 Código completo, migración y deploy pendientes |
+| 2 | Pedidos del cliente: nombre "Alquiler Motos C.V", categorías de gasto propias, pago de varios días | ✅ Desplegada (2026-10-16) — falta verificar RLS de categorías |
 
 ## Bitácora de iteraciones
 
@@ -124,7 +124,7 @@ Detalle completo: [spec de diseño](docs/superpowers/specs/2026-10-15-mototaxi-d
 | | |
 |---|---|
 | **Fecha** | 2026-10-16 |
-| **Estado** | 🚧 Código completo en la rama `feat/pedidos-cliente-2026-10-16`. Falta aplicar la migración y publicar |
+| **Estado** | ✅ Desplegada (2026-10-16): migración aplicada y `main` publicado. Falta correr `npm run test:rls` completo |
 | **Objetivo** | Tres pedidos del cliente: (1) llamar la app "Alquiler Motos C.V"; (2) que cada usuario pueda crear sus propias categorías de gasto; (3) registrar pagos adelantados de hasta 2 semanas, eligiendo qué días cubre el pago. |
 
 #### Qué se hizo
@@ -146,7 +146,8 @@ Detalle completo: [spec de diseño](docs/superpowers/specs/2026-10-15-mototaxi-d
 - Una categoría con gastos no se elimina, solo se renombra.
 
 #### ⏳ Diferido — NO perder
-- ⏳ **Aplicar la migración y publicar (en ese orden y seguidos):** `npx supabase db push` → `npm run test:rls` → integrar la rama a `main`. Entre la migración y el deploy, la versión publicada falla, porque busca la columna `categoria` que ya no existe. Hacerlo en un momento en que el cliente no esté registrando.
+- ~~⏳ **Aplicar la migración y publicar**~~ → hecho el 2026-10-16. Migración verificada con el usuario de prueba A: 5 categorías sembradas, columna `categoria` eliminada y sus 2 gastos con `categoria_id`.
+- ⏳ **Correr `npm run test:rls` completo** — se saltó porque la clave del usuario de prueba B en `.env.test.local` quedó inválida (1 carácter). Corregirla y volver a correr: deben pasar 7 de 7.
 - ⏳ **Pantalla "Mi cuenta" para cambiar la contraseña** — los correos de los usuarios no son reales, así que la recuperación por correo no funciona. Hoy se cambia desde el SQL Editor de Supabase. Retomar si los cambios de contraseña se vuelven frecuentes.
 - ⏳ **Variables de Cloudflare para Preview** — solo se cargaron las de Production, así que las URLs de vista previa de ramas no tienen Supabase. Retomar si se quieren usar las previews para probar.
 - ⏳ **Pago de varios días con fechas de hace más de 14 días** — el calendario no las ofrece. Se puede registrar el pago y luego editar su fecha. Retomar si hace falta.
