@@ -1,0 +1,152 @@
+/*
+ * Estilos globales de Mototaxi. Mobile-first para iPhone.
+ * Identidad: la placa amarilla de moto colombiana (fondo #FFCC00, caracteres negros
+ * condensados). Se usa en la placa de cada moto (.placa) y en el botón principal; el resto
+ * es sobrio (gris asfalto claro, legible al sol).
+ * - Tipografía: sistema para el texto; DIN Condensed / DIN Alternate (vienen con iOS, no se
+ *   descargan) para placas y cifras.
+ * - Inputs a 17px (iOS hace zoom bajo 16px), áreas táctiles de 44px o más, safe-areas
+ *   (notch) con env(safe-area-inset-*), modo oscuro automático, reduced-motion respetado.
+ */
+:root {
+  --fondo: #eceef0;
+  --superficie: #ffffff;
+  --texto: #15171a;
+  --texto-suave: #5d636b;
+  --borde: #d5d9de;
+  --placa: #ffcc00;
+  --placa-texto: #111111;
+  --ingreso: #1e7b4f;
+  --gasto: #c2362b;
+  --whatsapp: #1e7b4f;
+  --radio: 14px;
+  --sombra: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 14px rgb(0 0 0 / 0.05);
+  --fuente-cifras: 'DIN Alternate', 'DIN Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --fuente-placa: 'DIN Condensed', 'DIN Alternate', 'Arial Narrow', system-ui, sans-serif;
+  color-scheme: light dark;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #111315;
+    --superficie: #1b1e21;
+    --texto: #eef0f2;
+    --texto-suave: #9aa1a9;
+    --borde: #2c3034;
+    --ingreso: #4cc38a;
+    --gasto: #ff7a6e;
+    --whatsapp: #1e7b4f;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--fondo); color: var(--texto); -webkit-text-size-adjust: 100%; }
+body {
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+p { margin: 0; }
+
+.pantalla { max-width: 560px; margin: 0 auto; padding: 0 16px 128px; }
+
+.encabezado {
+  display: grid; grid-template-columns: 44px 1fr minmax(44px, auto); align-items: center; gap: 8px;
+  padding: 12px 0; position: sticky; top: 0; background: var(--fondo); z-index: 1;
+}
+.encabezado h1 { font-size: 1.2rem; margin: 0; text-align: center; letter-spacing: -0.01em; }
+.encabezado__volver {
+  font-size: 2rem; line-height: 1; text-decoration: none; color: var(--texto);
+  min-height: 44px; display: flex; align-items: center;
+}
+.encabezado__accion { justify-self: end; }
+.encabezado__accion a, .encabezado__accion button {
+  color: var(--texto); font: inherit; font-weight: 600; text-decoration: underline;
+  text-underline-offset: 3px; text-decoration-color: var(--placa); text-decoration-thickness: 3px;
+  background: none; border: 0; padding: 12px 4px; min-height: 44px;
+}
+.subtitulo { color: var(--texto-suave); text-align: center; margin: -4px 0 16px; }
+
+/* Firma: placa amarilla colombiana */
+.placa {
+  display: inline-block; background: var(--placa); color: var(--placa-texto);
+  font-family: var(--fuente-placa); font-weight: 700; font-size: 1.35rem; line-height: 1;
+  letter-spacing: 0.08em; padding: 5px 9px 3px; border: 2px solid var(--placa-texto);
+  border-radius: 6px; box-shadow: inset 0 0 0 2px var(--placa);
+}
+
+.tarjeta { background: var(--superficie); border-radius: var(--radio); box-shadow: var(--sombra); padding: 16px; margin: 0 0 12px; }
+a.tarjeta { display: block; color: inherit; text-decoration: none; }
+.tarjeta-moto { display: flex !important; justify-content: space-between; align-items: center; gap: 12px; }
+.tarjeta-moto .etiqueta { margin-top: 6px; }
+.etiqueta { font-size: 0.78rem; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 0.06em; }
+.neto {
+  font-family: var(--fuente-cifras); font-size: 2.6rem; font-weight: 700;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.01em; margin: 4px 0; line-height: 1.1;
+}
+.fila-totales { display: flex; gap: 24px; margin-top: 8px; }
+.monto { font-family: var(--fuente-cifras); font-size: 1.15rem; font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+.ingreso { color: var(--ingreso); }
+.gasto { color: var(--gasto); }
+
+.segmentado {
+  display: grid; grid-template-columns: repeat(3, 1fr); background: var(--borde);
+  border-radius: 10px; padding: 2px; margin-bottom: 12px;
+}
+.segmentado button {
+  border: 0; background: transparent; padding: 8px; border-radius: 8px; font: inherit;
+  font-size: 0.9rem; color: var(--texto); min-height: 40px;
+}
+.segmentado button[aria-pressed='true'] { background: var(--superficie); box-shadow: var(--sombra); font-weight: 600; }
+
+.seccion { margin: 24px 0 4px; }
+.lista { list-style: none; margin: 0 0 16px; padding: 0; }
+.lista a {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--borde); color: inherit; text-decoration: none; min-height: 52px;
+}
+.lista small { display: block; color: var(--texto-suave); font-size: 0.85rem; margin-top: 4px; }
+
+.campo { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.campo label { font-weight: 600; font-size: 0.95rem; }
+.campo input, .campo select, .campo textarea {
+  font: inherit; font-size: 17px; padding: 12px; border: 1px solid var(--borde); border-radius: 10px;
+  background: var(--superficie); color: var(--texto); min-height: 48px; width: 100%;
+}
+.campo input:focus-visible, .campo select:focus-visible, .campo textarea:focus-visible {
+  outline: 3px solid var(--placa); outline-offset: 1px; border-color: var(--texto);
+}
+.campo input[aria-invalid='true'] { border-color: var(--gasto); }
+.campo__error { color: var(--gasto); font-size: 0.875rem; }
+.campo--monto input { font-family: var(--fuente-cifras); font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.boton {
+  display: flex; align-items: center; justify-content: center; width: 100%; min-height: 52px;
+  border: 2px solid var(--placa-texto); border-radius: 12px; font: inherit; font-size: 1.05rem; font-weight: 700;
+  background: var(--placa); color: var(--placa-texto); text-decoration: none; cursor: pointer;
+}
+.boton:disabled { opacity: 0.6; }
+.boton:focus-visible { outline: 3px solid var(--texto); outline-offset: 2px; }
+.boton--secundario { background: var(--superficie); color: var(--texto); border: 1px solid var(--borde); font-weight: 600; }
+.boton--peligro { background: transparent; color: var(--gasto); border: 1px solid var(--gasto); font-weight: 600; }
+.boton--whatsapp { background: var(--whatsapp); color: #ffffff; border-color: var(--whatsapp); }
+.boton + .boton { margin-top: 10px; }
+
+.barra-inferior {
+  position: fixed; left: 0; right: 0; bottom: 0; margin: 0 auto; max-width: 560px;
+  padding: 16px 16px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, var(--fondo) 35%);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.barra-inferior .boton + .boton { margin-top: 0; }
+
+.aviso {
+  background: color-mix(in srgb, var(--gasto) 12%, var(--superficie)); border-left: 4px solid var(--gasto);
+  padding: 12px; border-radius: 8px; margin-bottom: 16px;
+}
+.vacio { text-align: center; color: var(--texto-suave); padding: 32px 0; }
+.mensaje { white-space: pre-wrap; font-style: normal; margin: 8px 0 16px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
