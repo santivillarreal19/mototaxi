@@ -3,8 +3,10 @@
  */
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { RutaProtegida } from './auth/RutaProtegida';
+import { Caja } from './pantallas/Caja';
 import { Categorias } from './pantallas/Categorias';
 import { DetalleMoto } from './pantallas/DetalleMoto';
+import { DetallePrestamo, EditarEntradaCaja, NuevaEntradaCaja } from './pantallas/EntradaCaja';
 import { FormMoto } from './pantallas/FormMoto';
 import { Inicio } from './pantallas/Inicio';
 import { Login } from './pantallas/Login';
@@ -27,6 +29,12 @@ export function App() {
         <Route path="/movimientos/:id/editar" element={<EditarMovimiento />} />
         <Route path="/pago-registrado/:id" element={<PagoRegistrado />} />
         <Route path="/categorias" element={<Categorias />} />
+        <Route path="/caja" element={<Caja />} />
+        <Route path="/caja/saldo" element={<NuevaEntradaCaja tipo="saldo" />} />
+        <Route path="/caja/prestamo" element={<NuevaEntradaCaja tipo="prestamo" />} />
+        <Route path="/caja/prestamos/:id" element={<DetallePrestamo />} />
+        <Route path="/caja/prestamos/:id/abono" element={<NuevaEntradaCaja tipo="abono" />} />
+        <Route path="/caja/:id/editar" element={<EditarEntradaCaja />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

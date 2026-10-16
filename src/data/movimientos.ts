@@ -93,3 +93,20 @@ export async function eliminarMovimiento(id: string): Promise<void> {
   const { error } = await supabase.from('movimientos').delete().eq('id', id);
   if (error) throw error;
 }
+
+/** Pagos y gastos registrados desde un momento (created_at), para el saldo actual de la Caja. */
+export async function listarMovimientosRegistradosDesde(
+  desde: string,
+): Promise<Pick<Movimiento, 'tipo' | 'monto' | 'created_at'>[]> {
+  return paginar(async (inicio, fin) => {
+    const { data, error } = await supabase
+      .from('movimientos')
+      .select('id, tipo, monto, created_at')
+      .gte('created_at', desde)
+      .order('created_at')
+      .order('id')
+      .range(inicio, fin);
+    if (error) throw error;
+    return data as Pick<Movimiento, 'tipo' | 'monto' | 'created_at'>[];
+  });
+}

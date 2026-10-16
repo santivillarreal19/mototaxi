@@ -1,7 +1,8 @@
 /**
  * Detalle de una moto: totales del período y lista de movimientos (más recientes primero).
  * Botones fijos abajo para + Pago / + Gasto (ocultos si la moto está archivada).
- * Tocar un movimiento abre su edición.
+ * Tocar un movimiento abre su edición. Si el encargado tiene préstamos pendientes (Caja),
+ * se muestra cuánto debe, con enlace a la Caja.
  */
 import { Link, useParams } from 'react-router-dom';
 import { Encabezado } from '../componentes/Encabezado';
@@ -9,9 +10,11 @@ import { Aviso, Cargando, ErrorCarga } from '../componentes/Estado';
 import { ResumenTotales } from '../componentes/ResumenTotales';
 import { SelectorPeriodo } from '../componentes/SelectorPeriodo';
 import { obtenerMoto } from '../data/motos';
+import { listarCaja } from '../data/caja';
 import { listarMovimientos } from '../data/movimientos';
 import { useDatos } from '../hooks/useDatos';
 import { usePeriodo } from '../hooks/usePeriodo';
+import { estadoPrestamos } from '../lib/caja';
 import { formatearPesos } from '../lib/dinero';
 import { formatearFecha, hoyISO, rangoPeriodo } from '../lib/fechas';
 import { etiquetaCategoria } from '../lib/tipos';
@@ -22,13 +25,16 @@ export function DetalleMoto() {
   const [periodo, cambiarPeriodo] = usePeriodo();
   const { desde, hasta } = rangoPeriodo(periodo, hoyISO());
   const { datos, error, cargando, recargar } = useDatos(async () => {
-    const [moto, movs] = await Promise.all([obtenerMoto(id), listarMovimientos({ motoId: id, desde, hasta })]);
-    return { moto, movs };
+    const [moto, movs, caja] = await Promise.all([obtenerMoto(id), listarMovimientos({ motoId: id, desde, hasta }), listarCaja()]);
+    const debe = estadoPrestamos(caja)
+      .filter((p) => p.prestamo.moto_id === id)
+      .reduce((s, p) => s + p.pendiente, 0);
+    return { moto, movs, debe };
   }, [id, desde, hasta]);
 
   if (cargando && !datos) return <Cargando />;
   if (!datos) return <ErrorCarga titulo="Moto" volverA="/" mensaje={error ?? 'No se encontró la moto.'} onReintentar={recargar} />;
-  const { moto, movs } = datos;
+  const { moto, movs, debe } = datos;
 
   return (
     <main className="pantalla">
@@ -39,6 +45,11 @@ export function DetalleMoto() {
       </p>
       {moto.archivada && <Aviso>Esta moto está archivada. Desarchívala desde "Editar" para registrar movimientos.</Aviso>}
       {error && <Aviso onReintentar={recargar}>{error}</Aviso>}
+      {debe > 0 && (
+        <Link to="/caja" className="enlace-linea">
+          Préstamos pendientes: debe {formatearPesos(debe)}
+        </Link>
+      )}
       <SelectorPeriodo valor={periodo} onCambio={cambiarPeriodo} />
       <ResumenTotales titulo="Neto de la moto" totales={calcularTotales(movs)} />
       {movs.length === 0 ? (

@@ -1,5 +1,6 @@
 /**
- * Pantalla principal: neto general del período y una tarjeta por moto activa con su neto.
+ * Pantalla principal: saldo actual de la Caja (si hay saldo agregado), neto general del
+ * período y una tarjeta por moto activa con su neto. Al final, acceso a la Caja.
  * El neto general incluye los movimientos de motos archivadas (es plata que sí entró o
  * salió); las tarjetas solo muestran las motos activas.
  */
@@ -8,6 +9,7 @@ import { Encabezado } from '../componentes/Encabezado';
 import { Aviso, Cargando } from '../componentes/Estado';
 import { ResumenTotales } from '../componentes/ResumenTotales';
 import { SelectorPeriodo } from '../componentes/SelectorPeriodo';
+import { cargarCajaConSaldo } from '../data/caja';
 import { listarMotos } from '../data/motos';
 import { listarMovimientos } from '../data/movimientos';
 import { useDatos } from '../hooks/useDatos';
@@ -20,8 +22,12 @@ export function Inicio() {
   const [periodo, cambiarPeriodo] = usePeriodo();
   const { desde, hasta } = rangoPeriodo(periodo, hoyISO());
   const { datos, error, cargando, recargar } = useDatos(async () => {
-    const [motos, movs] = await Promise.all([listarMotos({ incluirArchivadas: false }), listarMovimientos({ desde, hasta })]);
-    return { motos, movs };
+    const [motos, movs, caja] = await Promise.all([
+      listarMotos({ incluirArchivadas: false }),
+      listarMovimientos({ desde, hasta }),
+      cargarCajaConSaldo(),
+    ]);
+    return { motos, movs, saldo: caja.saldo };
   }, [desde, hasta]);
 
   const porMoto = datos ? totalesPorMoto(datos.movs) : new Map();
@@ -34,6 +40,15 @@ export function Inicio() {
       {cargando && !datos && <Cargando />}
       {datos && (
         <>
+          {datos.saldo !== null && (
+            <Link to="/caja" className="tarjeta tarjeta-moto">
+              <div>
+                <p className="etiqueta">Saldo actual</p>
+                <span className={`monto ${datos.saldo < 0 ? 'gasto' : ''}`}>{formatearPesos(datos.saldo)}</span>
+              </div>
+              <span aria-hidden="true">›</span>
+            </Link>
+          )}
           <ResumenTotales titulo="Ganancia neta" totales={calcularTotales(datos.movs)} />
           {datos.motos.length === 0 ? (
             <div className="vacio">
@@ -58,6 +73,9 @@ export function Inicio() {
               );
             })
           )}
+          <Link to="/caja" className="boton boton--secundario">
+            Caja: saldo y préstamos
+          </Link>
         </>
       )}
     </main>

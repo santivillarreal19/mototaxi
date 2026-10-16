@@ -45,3 +45,28 @@ export type MovimientoNuevo = Omit<Movimiento, 'id' | 'created_at' | 'categoria'
 export function etiquetaCategoria(m: Pick<Movimiento, 'categoria'>): string {
   return m.categoria?.nombre ?? 'Gasto';
 }
+
+/**
+ * Caja (tabla `caja`): dinero que no sale de las motos. 'saldo' = dinero agregado,
+ * 'prestamo' = prestado al encargado de una moto, 'abono' = devolución de un préstamo.
+ */
+export type TipoCaja = 'saldo' | 'prestamo' | 'abono';
+
+export interface EntradaCaja {
+  id: string;
+  tipo: TipoCaja;
+  fecha: string;
+  monto: number;
+  /** Solo en préstamos. */
+  moto_id: string | null;
+  /** Solo en préstamos: nombre del encargado al momento de prestar. */
+  encargado_nombre: string | null;
+  /** Solo en abonos: el préstamo que se está devolviendo. */
+  prestamo_id: string | null;
+  nota: string | null;
+  created_at: string;
+  /** Placa de la moto del préstamo, traída junto con la entrada (embed de PostgREST). */
+  moto: { placa: string } | null;
+}
+
+export type EntradaCajaNueva = Omit<EntradaCaja, 'id' | 'created_at' | 'moto'>;

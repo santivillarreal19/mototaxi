@@ -10,6 +10,7 @@ App web instalable (PWA), publicada como **Alquiler Motos C.V** en https://motot
 - **Pagos de alquiler**, incluso **adelantados de varios días**: el monto dice cuántos días cubre y se marcan en un calendario.
 - **Confirmación por WhatsApp** al encargado, con el mensaje listo.
 - **Gastos** con categorías que crea cada usuario.
+- **Caja:** saldo actual (dinero agregado + lo que dejan las motos) y **préstamos a encargados** con abonos y saldo pendiente.
 - **Ganancia neta** (ingresos − gastos) general y por moto, por período (este mes, mes anterior, todo).
 - **Instalable en iPhone** desde Safari (PWA), sin App Store. Usable con mala señal: guardar dos veces no duplica pagos.
 - **Datos aislados por usuario** con Row Level Security de Postgres, verificados con pruebas de integración.
@@ -87,6 +88,7 @@ Detalle completo: [spec de diseño](docs/superpowers/specs/2026-10-15-mototaxi-d
 | 1 | Implementación v1 (motos, pagos, gastos, totales, WhatsApp, PWA) y despliegue | ✅ Desplegada (2026-10-16) |
 | 2 | Pedidos del cliente: nombre "Alquiler Motos C.V", categorías de gasto propias, pago de varios días | ✅ Desplegada (2026-10-16) — falta verificar RLS de categorías |
 | 3 | Guía de operación y repo público para portafolio | ✅ Completada (2026-10-16) |
+| 4 | Caja: saldo inicial/agregado y préstamos a encargados con abonos | 🚧 Código completo, migración y deploy pendientes |
 
 ## Bitácora de iteraciones
 
@@ -205,5 +207,41 @@ Suite: **84 tests** unitarios (baseline 65 + 19 nuevos). RLS: 7 (5 + 2 de catego
 #### ⏳ Diferido — NO perder
 - ⏳ **Cerrar el registro público en Supabase** — hallazgo del 2026-10-16: en el proyecto real `disable_signup` está en `false`, aunque la spec pedía deshabilitarlo. La URL y la clave anon viajan en la app publicada, así que cualquiera puede crear una cuenta. RLS impide que vea los datos del cliente, pero tendría cuenta en el proyecto. Arreglo: Supabase → Authentication → Sign In / Providers → desactivar **Allow new users to sign up**. Hacerlo desde el panel y **no** con `supabase config push`, porque el `config.toml` local tiene `enable_signup = true` y `site_url` de localhost y pisaría la configuración remota. Prioridad alta.
 - ⏳ **Sin licencia** en el repo. Por defecto, todos los derechos quedan reservados: se puede ver el código, pero no reutilizarlo. Agregar una licencia solo si se quiere permitir su uso.
+
+---
+
+### Iteración 4 — Caja: saldo y préstamos a encargados
+
+| | |
+|---|---|
+| **Fecha** | 2026-10-16 |
+| **Estado** | 🚧 Código completo en la rama `feat/caja-2026-10-16`. Falta aplicar la migración y publicar |
+| **Objetivo** | El cliente ya tenía $628.000 antes de usar la app y quiere verlos como saldo. Además, a veces los encargados le piden préstamos, y quiere que quede registro de ellos. |
+
+#### Qué se hizo
+- **Migración** [20261016130000_caja.sql](supabase/migrations/20261016130000_caja.sql): tabla `caja` con tres tipos de entrada. `saldo` (dinero agregado), `prestamo` (con `moto_id` y el `encargado_nombre` de ese momento) y `abono` (con `prestamo_id`). Un CHECK define qué campos lleva cada tipo. RLS por dueño, que exige además que la moto y el préstamo sean del mismo dueño. FKs `on delete restrict`: no se borra un préstamo con abonos. **Solo agrega una tabla**, así que la versión publicada antes de la migración sigue funcionando.
+- **Reglas** en [caja.ts](src/lib/caja.ts): saldo actual, estado de cada préstamo (abonado y pendiente) y validaciones (un abono no puede pasar de lo pendiente; un préstamo no puede quedar por debajo de lo ya abonado).
+- **Pantallas:**
+  - [Caja.tsx](src/pantallas/Caja.tsx): saldo actual, préstamos pendientes, historial y botones "+ Agregar saldo" y "+ Préstamo".
+  - [EntradaCaja.tsx](src/pantallas/EntradaCaja.tsx): crear y editar entradas, y el detalle del préstamo con sus abonos.
+  - [FormCaja.tsx](src/componentes/FormCaja.tsx): el formulario.
+  - En el **inicio**, la tarjeta "Saldo actual" y el acceso a la Caja. En el **detalle de moto**, "Préstamos pendientes: debe $X".
+
+#### Decisiones tomadas (con el usuario)
+- **Santiago (por el cliente):** dos acciones, **"Agregar saldo"** (para los $628.000 y aportes futuros) y **"Préstamo"** (registro de lo prestado a encargados).
+- **Santiago:** el préstamo **resta** del saldo actual y los **abonos** suman. La devolución se registra con abonos parciales y se ve cuánto falta.
+- **Santiago:** el préstamo se asocia a **la moto**, y se guarda el nombre del encargado de ese momento.
+- **Santiago:** los $628.000 son el saldo **de hoy**. Saldo actual = saldos − préstamos + abonos + (pagos − gastos **registrados** desde el primer saldo). Se usa `created_at` y no la fecha del movimiento: lo registrado antes ya está incluido en los $628.000, y un pago adelantado cuenta cuando se recibió la plata.
+- Saldo, préstamos y abonos **no** entran en la ganancia por moto ni en los totales por período.
+
+#### ⏳ Diferido — NO perder
+- ⏳ **Aplicar y publicar, en este orden:** `npx supabase db push` → `npm run test:rls` → integrar a `main`. Al revés no funciona: el código nuevo consulta `caja`, y si se publica antes de la migración el inicio falla.
+- ⏳ **Cargar los $628.000** en la cuenta del cliente: Caja → "+ Agregar saldo", con fecha de hoy.
+- ⏳ **WhatsApp al encargado por préstamos o abonos** — no se pidió. Retomar si el cliente quiere constancia para el encargado.
+- ⏳ **Intereses de préstamos** — no se pidió; hoy un préstamo es solo capital.
+- ⏳ **Validación de abonos en la base** — que un abono no supere lo pendiente se valida solo en la app. Retomar si se editan datos a mano con frecuencia.
+
+#### Tests
+Suite: **93 tests** unitarios (84 + 9 de caja). RLS: 8 (7 + 1 de caja). Se corre después de aplicar la migración.
 
 ---
