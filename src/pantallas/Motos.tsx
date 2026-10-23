@@ -1,12 +1,12 @@
 /**
- * Gestión de motos: lista de activas y archivadas, botón para crear una nueva, acceso a
- * las categorías de gasto, cambio de contraseña y cierre de sesión. Tocar una moto abre su edición (placa, tarifa, encargado, archivar).
+ * Gestión de motos: lista de activas y archivadas y botón para crear una nueva. Categorías,
+ * cambio de contraseña y cierre de sesión están en el menú lateral (componentes/Menu.tsx).
+ * Tocar una moto abre su edición (placa, tarifa, encargado, archivar).
  */
 import { Link } from 'react-router-dom';
 import { Encabezado } from '../componentes/Encabezado';
 import { Aviso, Cargando } from '../componentes/Estado';
 import { listarMotos } from '../data/motos';
-import { supabase } from '../data/supabase';
 import { useDatos } from '../hooks/useDatos';
 import { formatearPesos } from '../lib/dinero';
 import type { Moto } from '../lib/tipos';
@@ -63,15 +63,6 @@ export function Motos() {
       <Link to="/motos/nueva" className="boton">
         + Nueva moto
       </Link>
-      <Link to="/categorias" className="boton boton--secundario">
-        Categorías de gasto
-      </Link>
-      <Link to="/cuenta/clave" className="boton boton--secundario">
-        Cambiar contraseña
-      </Link>
-      <button type="button" className="boton boton--secundario" onClick={() => void supabase.auth.signOut()}>
-        Cerrar sesión
-      </button>
     </main>
   );
 }

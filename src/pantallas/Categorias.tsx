@@ -63,7 +63,7 @@ export function Categorias() {
 
   return (
     <main className="pantalla">
-      <Encabezado titulo="Categorías de gasto" volverA="/motos" />
+      <Encabezado titulo="Categorías de gasto" volverA="/" />
       {error && <Aviso onReintentar={recargar}>{error}</Aviso>}
       {aviso && <Aviso>{aviso}</Aviso>}
       {cargando && !categorias ? (

@@ -51,7 +51,7 @@ export function CambiarClave() {
   if (listo) {
     return (
       <main className="pantalla">
-        <Encabezado titulo="Cambiar contraseña" volverA="/motos" />
+        <Encabezado titulo="Cambiar contraseña" volverA="/" />
         <div className="tarjeta">
           <p>Listo, tu contraseña quedó cambiada. Úsala la próxima vez que inicies sesión.</p>
         </div>
@@ -64,7 +64,7 @@ export function CambiarClave() {
 
   return (
     <main className="pantalla">
-      <Encabezado titulo="Cambiar contraseña" volverA="/motos" />
+      <Encabezado titulo="Cambiar contraseña" volverA="/" />
       <form onSubmit={guardar} className="tarjeta" noValidate>
         {error && <Aviso>{error}</Aviso>}
         <Campo id="actual" etiqueta="Contraseña actual">

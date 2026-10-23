@@ -91,6 +91,7 @@ Detalle completo: [spec de diseño](docs/superpowers/specs/2026-10-15-mototaxi-d
 | 3 | Guía de operación y repo público para portafolio | ✅ Completada (2026-10-16) |
 | 4 | Caja: saldo inicial/agregado y préstamos a encargados con abonos | ✅ Desplegada (2026-10-16) |
 | 5 | Domingos de descanso intercalados y cambio de contraseña | ✅ Publicada (2026-10-23) |
+| 6 | Menú lateral para navegar entre secciones | ✅ Publicada (2026-10-23) |
 
 ## Bitácora de iteraciones
 
@@ -273,3 +274,20 @@ Suite: **93 tests** unitarios (84 + 9 de caja). RLS: 9 (7 + 2 de caja: aislamien
 
 #### Tests
 Suite: 93 + 7 nuevos (domingos de descanso y validación de contraseña). Verificados en GitHub Actions: en esta máquina no hay Node instalado.
+
+---
+
+### Iteración 6 — Menú lateral
+
+| | |
+|---|---|
+| **Fecha** | 2026-10-23 |
+| **Estado** | ✅ Publicada (2026-10-23) |
+| **Objetivo** | Al cliente le costaba llegar a algunas pantallas (Categorías, Caja, cerrar sesión): estaban escondidas al final de otras pantallas. |
+
+#### Qué se hizo
+- [Menu.tsx](src/componentes/Menu.tsx): botón ☰ a la derecha del encabezado en todas las pantallas con sesión. Abre un panel desde la derecha con Inicio, Motos, Caja y Categorías de gasto (la sección actual sale resaltada) y, al fondo, Cambiar contraseña y Cerrar sesión. Usa `<dialog>` con `showModal`: Escape, foco y fondo bloqueado los maneja el navegador; tocar el fondo oscuro lo cierra.
+- Se quitaron los accesos repetidos: "Motos" del encabezado del Inicio y, de la pantalla Motos, los botones de Categorías, Cambiar contraseña y Cerrar sesión. Categorías y Cambiar contraseña vuelven ahora al Inicio.
+
+#### Decisiones tomadas (con el usuario)
+- **Santiago:** navegación con menú lateral; revisado en el navegador antes de publicar.
