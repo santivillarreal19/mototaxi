@@ -45,3 +45,13 @@ export function validarTelefono(texto: string): string | null {
 export function validarTexto(texto: string, queFalta: string): string | null {
   return texto.trim() === '' ? `Escribe ${queFalta}` : null;
 }
+
+/** Mínimo de Supabase Auth (minimum_password_length en supabase/config.toml). */
+export const CLAVE_MINIMA = 6;
+
+export function validarClaveNueva(clave: string, confirmacion: string, actual: string): string | null {
+  if (clave.length < CLAVE_MINIMA) return `La contraseña debe tener al menos ${CLAVE_MINIMA} caracteres`;
+  if (clave === actual) return 'La contraseña nueva debe ser distinta a la actual';
+  if (clave !== confirmacion) return 'Las contraseñas no coinciden';
+  return null;
+}

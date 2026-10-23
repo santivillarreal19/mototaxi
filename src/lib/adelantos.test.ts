@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { maxDiasCubiertos, rangoDiasPago, repartirPago, semanasCalendario, validarDiasPago } from './adelantos';
+import { domingoBloqueado, maxDiasCubiertos, rangoDiasPago, repartirPago, semanasCalendario, validarDiasPago } from './adelantos';
 
 describe('maxDiasCubiertos', () => {
   it('cuántas tarifas completas cubre el monto', () => {
@@ -65,5 +65,22 @@ describe('semanasCalendario', () => {
     expect(semanas[0][4]).toEqual({ fecha: '2026-10-02', enRango: true });
     expect(semanas[4][6]).toEqual({ fecha: '2026-11-01', enRango: false });
     expect(semanas.every((s) => s.length === 7)).toBe(true);
+  });
+});
+
+describe('domingoBloqueado', () => {
+  it('un domingo se descansa y el siguiente se trabaja', () => {
+    expect(domingoBloqueado('2026-10-25')).toBe(true);
+    expect(domingoBloqueado('2026-11-01')).toBe(false);
+    expect(domingoBloqueado('2026-11-08')).toBe(true);
+    expect(domingoBloqueado('2026-10-18')).toBe(false);
+    expect(domingoBloqueado('2026-10-11')).toBe(true);
+  });
+  it('solo aplica a domingos', () => {
+    expect(domingoBloqueado('2026-10-24')).toBe(false);
+    expect(domingoBloqueado('2026-10-26')).toBe(false);
+  });
+  it('validarDiasPago no deja guardar un domingo de descanso', () => {
+    expect(validarDiasPago(['2026-10-24', '2026-10-25'], 3)).toBe('Ese domingo es de descanso: desmárcalo');
   });
 });

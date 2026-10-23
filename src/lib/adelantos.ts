@@ -6,12 +6,30 @@
  * de una tarifa cada uno, y lo que sobre se suma al último día: el total registrado es
  * siempre lo que de verdad pagó. Un abono menor a la tarifa cubre un solo día.
  * Los días se eligen entre 14 días atrás y 14 días adelante (rangoDiasPago).
+ * Domingos intercalados (pedido del cliente, 2026-10-23): un domingo se descansa y el
+ * siguiente se trabaja. El domingo de descanso no se puede marcar (domingoBloqueado).
  *
  * Uso: FormPagoDias (calendario) y data/movimientos.crearPagoVariosDias.
  */
 import { diaSemana, sumarDias } from './fechas';
 
 export const DIAS_MAXIMOS = 14;
+
+/** Domingo de descanso de referencia; desde él, se descansa un domingo sí y otro no. */
+export const DOMINGO_BLOQUEADO_BASE = '2026-10-25';
+
+function diasEntre(desde: string, hasta: string): number {
+  const utc = (iso: string) => {
+    const [anio, mes, dia] = iso.split('-').map(Number);
+    return Date.UTC(anio, mes - 1, dia);
+  };
+  return Math.round((utc(hasta) - utc(desde)) / 86_400_000);
+}
+
+export function domingoBloqueado(iso: string): boolean {
+  if (diaSemana(iso) !== 0) return false;
+  return ((diasEntre(DOMINGO_BLOQUEADO_BASE, iso) / 7) % 2 + 2) % 2 === 0;
+}
 
 export function maxDiasCubiertos(monto: number | null, tarifa: number): number {
   if (monto === null || monto < tarifa) return 1;
@@ -31,6 +49,7 @@ export function repartirPago(monto: number, tarifa: number, fechas: string[]): {
 
 export function validarDiasPago(fechas: string[], maxDias: number): string | null {
   if (fechas.length === 0) return 'Marca el día que cubre el pago';
+  if (fechas.some(domingoBloqueado)) return 'Ese domingo es de descanso: desmárcalo';
   if (fechas.length > maxDias) {
     const cubre = maxDias === 1 ? 'cubre 1 día' : `cubre máximo ${maxDias} días`;
     return `Este monto ${cubre}: desmarca ${fechas.length - maxDias}`;

@@ -7,6 +7,7 @@
  *   último día; ver lib/adelantos.ts), todos con el mismo grupo_id y en un solo INSERT.
  * - Luego va a /pago-registrado/:id (id del primer día) con los pagos en el estado de la
  *   navegación, donde está el botón de WhatsApp.
+ * - Los domingos de descanso (uno sí, otro no; ver domingoBloqueado) no se pueden marcar.
  * - Ids y grupo_id se generan una sola vez: reintentar tras un corte de red no duplica.
  */
 import { useState, type FormEvent } from 'react';
@@ -14,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { aErrorApp } from '../data/errores';
 import { crearPagoVariosDias } from '../data/movimientos';
 import { supabase } from '../data/supabase';
-import { DIAS_MAXIMOS, maxDiasCubiertos, rangoDiasPago, repartirPago, semanasCalendario, validarDiasPago } from '../lib/adelantos';
+import { DIAS_MAXIMOS, domingoBloqueado, maxDiasCubiertos, rangoDiasPago, repartirPago, semanasCalendario, validarDiasPago } from '../lib/adelantos';
 import { formatearPesos } from '../lib/dinero';
 import { formatearDiaCorto, hoyISO } from '../lib/fechas';
 import { nuevoId } from '../lib/ids';
@@ -32,7 +33,7 @@ export function FormPagoNuevo({ moto }: { moto: Moto }) {
   const hoy = hoyISO();
   const { desde, hasta } = rangoDiasPago(hoy);
   const [monto, setMonto] = useState<number | null>(moto.tarifa_diaria);
-  const [dias, setDias] = useState<string[]>([hoy]);
+  const [dias, setDias] = useState<string[]>(domingoBloqueado(hoy) ? [] : [hoy]);
   const [nota, setNota] = useState('');
   const [errores, setErrores] = useState<Record<string, string | null>>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
@@ -101,14 +102,15 @@ export function FormPagoNuevo({ moto }: { moto: Moto }) {
               const [, mes, dia] = fecha.split('-');
               const marcado = dias.includes(fecha);
               const conMes = dia === '01' || fecha === desde;
+              const descanso = domingoBloqueado(fecha);
               return (
                 <button
                   key={fecha}
                   type="button"
-                  className={`calendario__dia${fecha === hoy ? ' calendario__dia--hoy' : ''}`}
+                  className={`calendario__dia${fecha === hoy ? ' calendario__dia--hoy' : ''}${descanso && enRango ? ' calendario__dia--descanso' : ''}`}
                   aria-pressed={marcado}
-                  aria-label={formatearDiaCorto(fecha)}
-                  disabled={!enRango || guardando}
+                  aria-label={`${formatearDiaCorto(fecha)}${descanso ? ', descanso' : ''}`}
+                  disabled={!enRango || descanso || guardando}
                   onClick={() => alternarDia(fecha)}
                 >
                   {Number(dia)}

@@ -166,6 +166,7 @@ a.tarjeta { display: block; color: inherit; text-decoration: none; }
 .calendario__dia small { font-family: system-ui, sans-serif; font-size: 0.6rem; font-weight: 600; text-transform: uppercase; margin-top: 2px; }
 .calendario__dia:disabled { background: transparent; border-color: transparent; color: var(--texto-suave); opacity: 0.45; }
 .calendario__dia--hoy { border: 2px solid var(--texto); }
+.calendario__dia--descanso { text-decoration: line-through; }
 .calendario__dia[aria-pressed='true'] { background: var(--placa); color: var(--placa-texto); border: 2px solid var(--placa-texto); }
 .calendario__dia:focus-visible { outline: 3px solid var(--placa); outline-offset: 1px; }
 

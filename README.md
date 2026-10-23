@@ -7,7 +7,8 @@ App web instalable (PWA), publicada como **Alquiler Motos C.V** en https://motot
 ## Funcionalidades
 
 - **Varias motos**, cada una con placa, tarifa diaria y encargado (nombre y celular). Las motos que ya no trabajan se archivan sin perder su historial.
-- **Pagos de alquiler**, incluso **adelantados de varios días**: el monto dice cuántos días cubre y se marcan en un calendario.
+- **Pagos de alquiler**, incluso **adelantados de varios días**: el monto dice cuántos días cubre y se marcan en un calendario. Los domingos se descansa uno sí y otro no, y el de descanso no se puede marcar.
+- **Cambio de contraseña** desde la app.
 - **Confirmación por WhatsApp** al encargado, con el mensaje listo.
 - **Gastos** con categorías que crea cada usuario.
 - **Caja:** saldo actual (dinero agregado + lo que dejan las motos) y **préstamos a encargados** con abonos y saldo pendiente.
@@ -89,6 +90,7 @@ Detalle completo: [spec de diseño](docs/superpowers/specs/2026-10-15-mototaxi-d
 | 2 | Pedidos del cliente: nombre "Alquiler Motos C.V", categorías de gasto propias, pago de varios días | ✅ Desplegada (2026-10-16) — falta verificar RLS de categorías |
 | 3 | Guía de operación y repo público para portafolio | ✅ Completada (2026-10-16) |
 | 4 | Caja: saldo inicial/agregado y préstamos a encargados con abonos | ✅ Desplegada (2026-10-16) |
+| 5 | Domingos de descanso intercalados y cambio de contraseña | ✅ Publicada (2026-10-23) |
 
 ## Bitácora de iteraciones
 
@@ -178,7 +180,7 @@ Detalle completo: [spec de diseño](docs/superpowers/specs/2026-10-15-mototaxi-d
 #### ⏳ Diferido — NO perder
 - ~~⏳ **Aplicar la migración y publicar**~~ → hecho el 2026-10-16. Migración verificada con el usuario de prueba A: 5 categorías sembradas, columna `categoria` eliminada y sus 2 gastos con `categoria_id`.
 - ~~⏳ **Correr `npm run test:rls` completo**~~ → hecho el 2026-10-16. `.env.test.local` usa ahora dos usuarios solo de prueba (`@mototaxi.test`): ni la cuenta del cliente ni la de Santiago. 9/9.
-- ⏳ **Pantalla "Mi cuenta" para cambiar la contraseña** — los correos de los usuarios no son reales, así que la recuperación por correo no funciona. Hoy se cambia desde el SQL Editor de Supabase. Retomar si los cambios de contraseña se vuelven frecuentes.
+- ~~⏳ **Pantalla "Mi cuenta" para cambiar la contraseña**~~ → hecho en la iteración 5 (Motos → "Cambiar contraseña"). Los correos de los usuarios no son reales, así que la recuperación por correo no funciona. Hoy se cambia desde el SQL Editor de Supabase. Retomar si los cambios de contraseña se vuelven frecuentes.
 - ⏳ **Variables de Cloudflare para Preview** — solo se cargaron las de Production, así que las URLs de vista previa de ramas no tienen Supabase. Retomar si se quieren usar las previews para probar.
 - ⏳ **Pago de varios días con fechas de hace más de 14 días** — el calendario no las ofrece. Se puede registrar el pago y luego editar su fecha. Retomar si hace falta.
 
@@ -248,3 +250,26 @@ Suite: **84 tests** unitarios (baseline 65 + 19 nuevos). RLS: 7 (5 + 2 de catego
 Suite: **93 tests** unitarios (84 + 9 de caja). RLS: 9 (7 + 2 de caja: aislamiento, y abono propio sí / ajeno no). Se corren después de aplicar las migraciones.
 
 ---
+
+### Iteración 5 — Domingos intercalados y cambio de contraseña
+
+| | |
+|---|---|
+| **Fecha** | 2026-10-23 |
+| **Estado** | ✅ Publicada (2026-10-23) |
+| **Objetivo** | El cliente descansa un domingo sí y otro no: esos domingos no deben poder marcarse como pagados. Además, que cada usuario pueda cambiar su contraseña sin pasar por el SQL Editor. |
+
+#### Qué se hizo
+- **Domingos de descanso** en [adelantos.ts](src/lib/adelantos.ts): `domingoBloqueado` toma como referencia el domingo **2026-10-25** (bloqueado) y desde ahí alterna cada 7 días (01/11 libre, 08/11 bloqueado…). En el calendario de [FormPagoNuevo.tsx](src/componentes/FormPagoNuevo.tsx) esos domingos salen tachados y deshabilitados; `validarDiasPago` y la edición de un pago ([FormMovimiento.tsx](src/componentes/FormMovimiento.tsx)) tampoco los aceptan. Los gastos sí se pueden registrar en domingo.
+- **Cambiar contraseña** en [CambiarClave.tsx](src/pantallas/CambiarClave.tsx) (`/cuenta/clave`, botón en la pantalla Motos): pide la contraseña actual (se verifica volviendo a iniciar sesión), la nueva (mínimo 6 caracteres, distinta a la actual) y su confirmación, y la cambia con `supabase.auth.updateUser`.
+
+#### Decisiones tomadas
+- **Cliente (vía Santiago):** "este domingo se bloquea, el siguiente no". "Este domingo" = 2026-10-25.
+- La regla aplica también a domingos pasados del calendario (14 días atrás), para que el patrón sea uno solo.
+- La regla vive solo en la app, sin cambio en la base: los pagos ya registrados en domingos de descanso no se tocan.
+
+#### ⏳ Diferido — NO perder
+- ⏳ **Cambiar el domingo de referencia** — si el cliente corre el turno (p. ej. trabaja dos domingos seguidos), cambiar `DOMINGO_BLOQUEADO_BASE` en [adelantos.ts](src/lib/adelantos.ts). Retomar si lo pide seguido: entonces convendría configurarlo desde la app.
+
+#### Tests
+Suite: 93 + 7 nuevos (domingos de descanso y validación de contraseña). Verificados en GitHub Actions: en esta máquina no hay Node instalado.

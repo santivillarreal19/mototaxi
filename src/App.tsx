@@ -4,6 +4,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { RutaProtegida } from './auth/RutaProtegida';
 import { Caja } from './pantallas/Caja';
+import { CambiarClave } from './pantallas/CambiarClave';
 import { Categorias } from './pantallas/Categorias';
 import { DetalleMoto } from './pantallas/DetalleMoto';
 import { DetallePrestamo, EditarEntradaCaja, NuevaEntradaCaja } from './pantallas/EntradaCaja';
@@ -29,6 +30,7 @@ export function App() {
         <Route path="/movimientos/:id/editar" element={<EditarMovimiento />} />
         <Route path="/pago-registrado/:id" element={<PagoRegistrado />} />
         <Route path="/categorias" element={<Categorias />} />
+        <Route path="/cuenta/clave" element={<CambiarClave />} />
         <Route path="/caja" element={<Caja />} />
         <Route path="/caja/saldo" element={<NuevaEntradaCaja tipo="saldo" />} />
         <Route path="/caja/prestamo" element={<NuevaEntradaCaja tipo="prestamo" />} />

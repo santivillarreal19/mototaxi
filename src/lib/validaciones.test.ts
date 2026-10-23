@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   normalizarPlaca,
+  validarClaveNueva,
   validarFecha,
   validarMonto,
   validarPlaca,
@@ -78,5 +79,20 @@ describe('validarTexto', () => {
   });
   it('acepta texto con contenido', () => {
     expect(validarTexto('Juan', 'el nombre del encargado')).toBeNull();
+  });
+});
+
+describe('validarClaveNueva', () => {
+  it('pide un mínimo de caracteres', () => {
+    expect(validarClaveNueva('abc', 'abc', 'vieja1')).toBe('La contraseña debe tener al menos 6 caracteres');
+  });
+  it('no deja repetir la actual', () => {
+    expect(validarClaveNueva('vieja1', 'vieja1', 'vieja1')).toBe('La contraseña nueva debe ser distinta a la actual');
+  });
+  it('la confirmación debe coincidir', () => {
+    expect(validarClaveNueva('nueva12', 'nueva13', 'vieja1')).toBe('Las contraseñas no coinciden');
+  });
+  it('acepta una clave válida', () => {
+    expect(validarClaveNueva('nueva12', 'nueva12', 'vieja1')).toBeNull();
   });
 });

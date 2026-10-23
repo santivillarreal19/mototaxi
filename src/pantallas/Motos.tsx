@@ -1,6 +1,6 @@
 /**
  * Gestión de motos: lista de activas y archivadas, botón para crear una nueva, acceso a
- * las categorías de gasto y cierre de sesión. Tocar una moto abre su edición (placa, tarifa, encargado, archivar).
+ * las categorías de gasto, cambio de contraseña y cierre de sesión. Tocar una moto abre su edición (placa, tarifa, encargado, archivar).
  */
 import { Link } from 'react-router-dom';
 import { Encabezado } from '../componentes/Encabezado';
@@ -65,6 +65,9 @@ export function Motos() {
       </Link>
       <Link to="/categorias" className="boton boton--secundario">
         Categorías de gasto
+      </Link>
+      <Link to="/cuenta/clave" className="boton boton--secundario">
+        Cambiar contraseña
       </Link>
       <button type="button" className="boton boton--secundario" onClick={() => void supabase.auth.signOut()}>
         Cerrar sesión
